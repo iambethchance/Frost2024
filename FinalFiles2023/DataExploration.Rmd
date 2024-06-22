@@ -1,0 +1,1033 @@
+---
+title: "Data Exploration"
+output: html_notebook
+---
+
+# In this data file:
+
+- Tables for the SERJ paper are created.
+
+# Data files needed for R code:
+
+- "Post Optional Subsetting.csv"
+
+
+Notes: Changes made from DataExplorationAjay.Rmd on 5/8/2021 
+- Added "here" package for reproducibility
+- Noted that there were 10514 observations rather than 14699 in dataset
+- Added SDs to Table 5 code chunks
+- Removed Reshaping Data Code (since not being used)
+
+### Reading in Data ###
+```{r, include=FALSE}
+library(plyr)
+library(tidyverse)
+library(here)
+library(GGally)
+load(url("http://www.rossmanchance.com/iscam3/ISCAM.RData"))
+
+#### Reading in subsetted data - 10514 observations####
+data <- read.csv("Post Optional Subsetting.csv", stringsAsFactors = T)
+
+data$why.take.pre <- as.factor(data$why.take.pre)
+data$why.take.post <- as.factor(data$why.take.post)
+data$race.origin <- as.factor(data$race.origin)
+data$institution <- as.factor(data$institution)
+
+data$textbook.classification2 <- recode(data$textbook.classification, ISI = "ISI", ISI1st = "ISI", NotSBI = "NonSBI", NotSBI2 = "NonSBI", Other = "Other", OtherSBI = "OtherSBI")
+```
+
+
+### Re-ordering Factor Variables ###
+```{r}
+data$gaise.familiar <- factor(data$gaise.familiar, levels = c(NA, "I am not familiar with GAISE", "Unsure", "Some", "Mostly", "Completely"))
+
+data$analyzing.data.experience <- factor(data$analyzing.data.experience, levels = c(NA, "No Experience", "Very Little Experience", "Some Experience", "A lot of Experience"))
+
+data$math.prereq <- factor(data$math.prereq, levels = c(NA, "None", "High School Algebra", "College Algebra", "Precalculus", "Other"))
+
+data$carnegie.classification <- factor(data$carnegie.classification, levels = c("Community College", "Baccalaureate College", "Master's", "Doctoral Universities"))
+
+data$textbook.classification <- factor(data$textbook.classification, levels = c("ISI", "ISI1st", "OtherSBI", "NotSBI", "NotSBI2", "Other"))
+
+data$textbook.classification2 <- factor(data$textbook.classification2, levels = c("ISI", "OtherSBI", "NonSBI", "Other"))
+```
+
+
+### Scatter plot ###
+```{r}
+data %>%
+  select(test.time.pre, test.time.post, c.rr.pre, a.rr.pre, c.rr.post, a.rr.post, pre.perc.33, post.perc.33, year) %>%
+  filter(test.time.pre < 100 & test.time.post < 100) %>%
+  ggpairs(columns = c("test.time.pre", "test.time.post", "pre.perc.33", "post.perc.33"), 
+          aes(color = year),
+          lower = list(continuous = wrap("smooth", alpha=.3, size=.1)),
+          upper = list(combo = wrap("box_no_facet", alpha=0.5), 
+                       continuous = wrap("cor", size=4)), 
+          diag = list(continuous = wrap("densityDiag", alpha=.3)))
+
+
+data %>%
+  select(gpa, satact.zscore, textbook.classification2, year) %>%
+  ggpairs(columns = c("gpa", "satact.zscore", "textbook.classification2"), 
+          aes(color=year),
+          lower = list(continuous = wrap("smooth", alpha=.3, size=.1)),
+          upper = list(combo = wrap("box_no_facet", alpha=0.5), 
+                       continuous = wrap("cor", size=4)), 
+          diag = list(continuous = wrap("densityDiag", alpha=.3)))
+```
+
+
+### Table 1. Student Characteristics ###
+```{r}
+# detach(package:plyr)
+# Number of Institutions #
+data %>%
+  select(institution, year) %>%
+#  group_by(year) %>%
+  summarise(institutions = n_distinct(institution))
+
+# Number of Instructors #
+data %>%
+  select(instructor, year) %>%
+#  group_by(year) %>%
+  summarise(instructors = n_distinct(instructor))
+
+# Number of Sections #
+data %>%
+  select(instructor.section, year) %>%
+#  group_by(year) %>%
+  summarise(sections = n_distinct(instructor.section))
+
+# Number of Students #
+data %>%
+  select(year) %>%
+#  group_by(year) %>%
+  tally()
+```
+
+
+### Table 2. Student Characteristics ###
+```{r}
+# No prev stat course #
+round(100 * prop.table(table(data$year, data$prev.stat.course), margin = 1), 1)
+round(100 * prop.table(table(data$year, data$prev.stat.course), margin = 1), 1)
+prop.table(table(data$prev.stat.course))
+
+
+# First Generation Student #
+round(100 * prop.table(table(data$year, data$firstgen), margin = 1), 1)
+prop.table(table(data$firstgen))
+
+# For major #
+round(100 * prop.table(table(data$year, data$is.major.course), margin = 1), 1)
+prop.table(table(data$is.major.course))
+
+# % female #
+round(100 * prop.table(table(data$year, data$gender), margin = 1), 1)
+prop.table(table(data$gender))
+
+```
+
+
+### Table 3. Instructor Characteristics ###
+```{r}
+# Number of instructors #
+data %>%
+  select(instructor, year) %>%
+#  group_by(year) %>%
+  summarise(number.of.instructors = n_distinct(instructor))
+
+# % female instructors #
+data %>%
+  select(year, instructor.gender, instructor) %>%
+# group_by(year) %>%
+  mutate(num.instructors = n_distinct(instructor)) %>%
+  ungroup() %>%
+# group_by(year, instructor.gender) %>%
+group_by(instructor.gender) %>%
+  mutate(perc.gender = round(100 * n_distinct(instructor) / num.instructors, 1)) %>%
+  select(year, instructor.gender, perc.gender, num.instructors) %>%
+  arrange(year) %>%
+  unique() %>%
+  filter(instructor.gender == "Female")
+
+
+# % type of position#
+data %>%
+  select(year, position.classification, instructor) %>%
+# group_by(year) %>%
+  mutate(num.instructors = n_distinct(instructor)) %>%
+  ungroup() %>%
+# group_by(year, instructor.gender) %>%
+group_by(position.classification) %>%
+  mutate(perc.type = round(100 * n_distinct(instructor) / num.instructors, 1)) %>%
+  select(year, position.classification, perc.type, num.instructors) %>%
+#  arrange(year) %>%
+  unique() 
+
+
+%>%
+  filter(instructor.gender == "Female")
+
+
+data %>%
+  select(instructor.gender, instructor) %>%
+#  group_by(instructor) %>%
+  unique() %>%
+  filter(instructor.gender == "Female")
+#107/194 = 55.2
+
+
+# No knowledge of Gaise #
+data %>%
+  select(year, gaise.familiar, instructor) %>%
+  filter(is.na(gaise.familiar) == F) %>%
+#  group_by(year) %>% 
+  mutate(num.instructors = n_distinct(instructor)) %>%
+  ungroup() %>%
+#  group_by(year, gaise.familiar) %>%
+  group_by(gaise.familiar) %>%
+  mutate(perc.gaise = round(100 * n_distinct(instructor)/ num.instructors, 1)) %>%
+  select(year, gaise.familiar, perc.gaise, num.instructors) %>%
+  arrange(year, gaise.familiar) %>%
+  unique() %>%
+  filter(gaise.familiar == "I am not familiar with GAISE")
+  
+# Statistical Sciences Department #
+# ### department.type as an institution level variable ###
+# data %>%
+#   select(year, department.type, institution) %>%
+#   group_by(year) %>%
+#   mutate(num.institutions = n_distinct(institution)) %>%
+#   ungroup() %>%
+#   group_by(year, department.type) %>%
+#   mutate(perc.stats.dep = round(100 * n_distinct(institution) / num.institutions, 0)) %>%
+#   select(year, department.type, perc.stats.dep, num.institutions) %>%
+#   arrange(year, department.type) %>%
+#   unique()
+# 
+# ### department.type as an instructor level variable ###
+# data %>%
+#   select(year, department.type, instructor) %>%
+#   group_by(year) %>%
+#   mutate(num.instructors = n_distinct(instructor)) %>%
+#   ungroup() %>%
+#   group_by(year, department.type) %>%
+#   mutate(perc.stats.dep = round(100 * n_distinct(instructor) / num.instructors, 0)) %>%
+#   select(year, department.type, perc.stats.dep, num.instructors) %>%
+#   arrange(year, department.type) %>%
+#   unique()
+
+data %>%
+  select(year, department.type, instructor, institution) %>%
+  group_by(year) %>%
+  mutate(num.instructors = n_distinct(instructor),
+         num.institutions = n_distinct(institution)) %>%
+  ungroup() %>%
+  group_by(year, department.type) %>%
+  mutate(perc.instructor = round(100 * n_distinct(instructor) / num.instructors, 0),
+         perc.institution = round(100 * n_distinct(institution) / num.institutions, 0)) %>%
+  select(year, department.type, perc.instructor, num.instructors, perc.institution, num.institutions) %>%
+  arrange(year, department.type) %>%
+  unique()
+
+# Avg/Median years teaching stat #
+data %>%
+  select(year, years.teaching.intro.stats, instructor) %>%
+#  group_by(year) %>%
+  unique() %>%
+  mutate(avg = round(mean(years.teaching.intro.stats, na.rm = T), 1),
+         median = median(years.teaching.intro.stats, na.rm = T)) %>%
+  select(year, avg, median) %>%
+  unique() %>%
+  arrange(year)
+
+# <= “very little” data experience #
+data %>%
+  select(year, analyzing.data.experience, instructor) %>%
+  filter(is.na(analyzing.data.experience) == F) %>%
+#  group_by(year) %>%
+  mutate(num.instructors = n_distinct(instructor)) %>%
+  ungroup() %>%
+#  group_by(year, analyzing.data.experience) %>%
+   group_by(analyzing.data.experience) %>%
+  mutate(perc.analyze = round(100 * n_distinct(instructor) / num.instructors, 1)) %>%
+  select(year, analyzing.data.experience, perc.analyze, num.instructors) %>%
+  arrange(year, analyzing.data.experience) %>%
+  unique() %>%
+  filter(analyzing.data.experience == "Very Little Experience" | analyzing.data.experience == "No Experience")
+```
+
+
+### Table 4. Institution Characteristics ###
+```{r}
+# Number of Institutions #
+data %>%
+  select(institution, year) %>%
+#  group_by(year) %>%
+  summarise(number.of.institutions = n_distinct(institution))
+
+# Math Prereq #
+data %>%
+  select(year, math.prereq, instructor.section) %>%
+  filter(is.na(math.prereq) == F) %>%
+  group_by(year) %>%
+  mutate(num.sections = n_distinct(instructor.section)) %>%
+  ungroup() %>%
+  group_by(year, math.prereq) %>%
+  mutate(perc.math = round(100 * n_distinct(instructor.section) / num.sections, 0)) %>%
+  select(year, math.prereq, perc.math, num.sections) %>%
+  arrange(year, math.prereq) %>%
+  unique()
+
+# Carnegie Classification #
+data %>%
+  select(year, carnegie.classification, institution) %>%
+  group_by(year) %>%
+  mutate(num.institutions = n_distinct(institution)) %>%
+  ungroup() %>%
+  group_by(year, carnegie.classification) %>%
+  mutate(perc.carnegie = round(100 * n_distinct(institution) / num.institutions, 0)) %>%
+  select(year, carnegie.classification, perc.carnegie, num.institutions) %>%
+  arrange(year, carnegie.classification) %>%
+  unique()
+
+# Student Type #
+data %>%
+  select(year, student.type, instructor.section) %>%
+  filter(is.na(student.type) == F) %>%
+  filter(year != "14-15") %>%
+  group_by(year) %>%
+  mutate(num.sections = n_distinct(instructor.section)) %>%
+  ungroup() %>%
+  group_by(year, student.type) %>%
+  mutate(perc.type = round(100 * n_distinct(instructor.section) / num.sections, 0)) %>%
+  select(year, student.type, perc.type, num.sections) %>%
+  arrange(year, student.type) %>%
+  unique()
+```
+
+
+### Figure 1 / BASIC STATISTICS ###
+```{r}
+### MEANS BY TEXTBOOK ###
+bxplt_data <- data %>%
+  filter(textbook.classification2 != "Other")
+
+bxplt_data$textbook.classification2 <- droplevels(bxplt_data$textbook.classification2)
+
+
+# Pre Percent #
+iscamsummary(data$pre.perc.24, data$textbook.classification2)
+iscamboxplot(bxplt_data$pre.perc.24, bxplt_data$textbook.classification2, names= c("Textbook","Pre-concept (24)"))
+anova(lm(bxplt_data$pre.perc.24 ~ bxplt_data$textbook.classification2))
+
+# SATACT zscore by textbook #
+bxplt_data <- bxplt_data %>%
+  filter(is.na(satact.zscore) == F)
+
+iscamsummary(data$satact.zscore, data$textbook.classification2)
+iscamboxplot(bxplt_data$satact.zscore, bxplt_data$textbook.classification2, names=c("Textbook","SAT/ACT z-score"))
+anova(lm(bxplt_data$satact.zscore ~ bxplt_data$textbook.classification2))
+
+# Post Percent #
+# iscamsummary(year3$post.perc.24, year3$textbook.classification2)
+# 
+# # Ach_Gain #
+# iscamsummary(year3$ach.gain.24)
+# # mean(data$new_ach_gain)
+# 
+# # Ach_Gain by Textbook #
+# iscamsummary(year3$ach.gain.24, year3$textbook.classification2)
+# means <- tapply(year3$ach.gain.24, year3$textbook.classification2, mean)
+# means
+```
+
+
+### Table 5. Mean achievable gain scores for 2014/2015 – 2016/2017 school years, across textbooks ###
+
+```{r, message = FALSE}
+## Added 5/8/2021
+data %>% 
+  select(textbook.classification2, ach.gain.24, year) %>% 
+  group_by(textbook.classification2, year) %>% 
+  summarize(mean_gain = mean(ach.gain.24), sd_gain = sd(ach.gain.24))
+
+data %>% 
+  select(textbook.classification2, ach.gain.24, year) %>% 
+  group_by(textbook.classification2, year) %>% 
+  summarize(mean_gain = mean(ach.gain.24), sd_gain = sd(ach.gain.24))
+```
+
+
+
+### Boxplot ###
+```{r}
+year3 <- data %>%
+  filter(year=="16-17") %>%
+  filter(textbook.classification2 != "Other")
+
+year3$textbook.classification2 <- droplevels(year3$textbook.classification2)
+means <- tapply(year3$ach.gain.24, year3$textbook.classification2, mean)
+grand_mean = mean(year3$ach.gain.24)
+my_rv_lab = "Achievable Gains"
+
+ggplot(year3, aes(x=textbook.classification2, y=ach.gain.24, fill=textbook.classification2, 
+                  group=instructor.section)) + 
+  geom_boxplot()+ xlab("Textbook classification") + ylab(my_rv_lab) + 
+  ggtitle(paste("Boxplots of", my_rv_lab,"by Section and Textbook Year 3")) + theme_bw() +
+  geom_segment(aes(x=.647,y=means[1],xend=1.355,yend=means[1]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=1.613,y=means[2],xend=2.355,yend=means[2]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=2.611,y=means[3],xend=3.363,yend=means[3]), colour="deeppink4", size=1.3) +
+ # geom_segment(aes(x=3.6,y=means[4],xend=4.374,yend=means[4]), colour="deeppink4", size=1.3) +
+ # geom_segment(aes(x=4.6,y=means[5],xend=5.383,yend=means[5]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=.5,y=grand_mean,xend=3.363,yend=grand_mean),colour="navyblue",show.legend=F)
+
+
+year2 <-  data %>%
+  filter(year=="15-16") %>%
+  filter(textbook.classification2 != "Other")
+
+year2$textbook.classification2 <- droplevels(year2$textbook.classification2)
+means <- tapply(year2$ach.gain.24, year2$textbook.classification2, mean)
+grand_mean = mean(year2$ach.gain.24)
+my_rv_lab = "Achievable Gains"
+
+ggplot(year2, aes(x=textbook.classification2, y=ach.gain.24, fill=textbook.classification2, 
+                  group=instructor.section)) + 
+  geom_boxplot()+ xlab("Section") + ylab(my_rv_lab) + 
+  ggtitle(paste("Boxplots of", my_rv_lab,"by Section and Textbook Year 2")) + theme_bw() +
+  geom_segment(aes(x=.647,y=means[1],xend=1.355,yend=means[1]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=1.613,y=means[2],xend=2.355,yend=means[2]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=2.611,y=means[3],xend=3.363,yend=means[3]), colour="deeppink4", size=1.3) +
+ # geom_segment(aes(x=3.6,y=means[4],xend=4.374,yend=means[4]), colour="deeppink4", size=1.3) +
+#  geom_segment(aes(x=4.6,y=means[5],xend=5.383,yend=means[5]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=.5,y=grand_mean,xend=3.363,yend=grand_mean),colour="navyblue",show.legend=F)
+
+
+year1 <-  data %>%
+  filter(year=="14-15") %>%
+  filter(textbook.classification2 != "Other")
+
+year1$textbook.classification2 <- droplevels(year1$textbook.classification2)
+means <- tapply(year1$ach.gain.24, year1$textbook.classification2, mean)
+grand_mean = mean(year1$ach.gain.24)
+my_rv_lab = "Achievable Gains"
+
+ggplot(year1, aes(x=textbook.classification2, y=ach.gain.24, fill=textbook.classification2, 
+                  group=instructor.section)) + 
+  geom_boxplot()+ xlab("Section") + ylab(my_rv_lab) + 
+  ggtitle(paste("Boxplots of", my_rv_lab,"by Section and Textbook Year 1")) + theme_bw() +
+  geom_segment(aes(x=.647,y=means[1],xend=1.355,yend=means[1]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=1.613,y=means[2],xend=2.355,yend=means[2]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=2.611,y=means[3],xend=3.363,yend=means[3]), colour="deeppink4", size=1.3) +
+#  geom_segment(aes(x=3.6,y=means[4],xend=4.374,yend=means[4]), colour="deeppink4", size=1.3) +
+#  geom_segment(aes(x=4.6,y=means[5],xend=5.383,yend=means[5]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=.5,y=grand_mean,xend=3.363,yend=grand_mean),colour="navyblue",show.legend=F)
+
+
+temp <- data %>%
+  filter(textbook.classification2 != "Other")
+
+temp$textbook.classification2 <- droplevels(temp$textbook.classification2)
+means <- tapply(temp$ach.gain.24, temp$textbook.classification2, mean)
+grand_mean = mean(temp$ach.gain.24)
+my_rv_lab = "Achievable Gains"
+
+ggplot(temp, aes(x=textbook.classification2, y=ach.gain.24, fill=textbook.classification2, 
+                  group=instructor.section)) + 
+  geom_boxplot()+ xlab("Section") + ylab(my_rv_lab) + 
+  ggtitle(paste("Boxplots of", my_rv_lab,"by Section and Textbook All Years")) + theme_bw() +
+  geom_segment(aes(x=.647,y=means[1],xend=1.355,yend=means[1]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=1.613,y=means[2],xend=2.355,yend=means[2]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=2.611,y=means[3],xend=3.363,yend=means[3]), colour="deeppink4", size=1.3) +
+ # geom_segment(aes(x=3.6,y=means[4],xend=4.374,yend=means[4]), colour="deeppink4", size=1.3) +
+#  geom_segment(aes(x=4.6,y=means[5],xend=5.383,yend=means[5]), colour="deeppink4", size=1.3) +
+  geom_segment(aes(x=.5,y=grand_mean,xend=3.363,yend=grand_mean),colour="navyblue",show.legend=F)
+
+```
+
+
+### Table 6. Concept Gains Table ###
+```{r}
+iscamsummary(data$dc.gains, data$textbook.classification2)[8]
+paste("DC:", mean(data$dc.gains))
+paste("DC Pre:", mean(data$dc.pre))
+
+iscamsummary(data$ds.gains, data$textbook.classification2)[8]
+paste("DS:" , mean(data$ds.gains))
+paste("DS Pre:", mean(data$ds.pre))
+
+iscamsummary(data$ci.gains, data$textbook.classification2)[8]
+paste("CI:", mean(data$ci.gains))
+paste("CI Pre:", mean(data$ci.pre))
+
+iscamsummary(data$st.gains, data$textbook.classification2)[8]
+paste("ST:", mean(data$st.gains))
+paste("ST Pre:", mean(data$st.pre))
+
+iscamsummary(data$sim.gains, data$textbook.classification2)[8]
+paste("Sim:", mean(data$sim.gains))
+paste("Sim Pre:", mean(data$sim.pre))
+```
+
+
+
+### Adding Right/Wrong Grading Columns
+```{r}
+data_graded <- data %>% 
+  # Grading questions 16 to 47 (note: for 16, only grades q16 subparts)
+  select(year, q16a.pre.c.1415:q47.pre.c, q16a.post.c.1415:q47.post.c) %>% 
+  
+  # Grading 1 if right (marked by asterix), 0 if wrong, NA if NA
+    mutate_at(vars(q16a.pre.c.1415:q34.pre.c, q36.pre.c:q47.pre.c, 
+                 q16a.post.c.1415:q34.post.c, q36.post.c:q47.post.c), 
+            ~if_else(str_detect(., "\\*"), 1, 0)) %>% 
+  
+  # Special case for q 35 where "c" is half credit
+  mutate_at(vars(q35.pre.c, q35.post.c),
+            ~case_when(. == "e**" ~ 1,
+                       . == "c" ~ 0.5,
+                       is.na(.) ~ NaN,
+                        TRUE ~ 0))
+
+
+## Adding a single grading column for Q16
+
+# Note: for the year 14-15, Q16 is given in a different question format
+# than for 15-16 and 16-17. 14-15 has 3 separate "select valid/invalid"
+# questions and the other years have a single "select all that apply" 
+# question with 4 possible statements.
+
+# Q16 Questions are graded 'individually' for 1415 where the average
+# is calculated unless ALL 3 parts are NA
+# For 15-16 & 16-17, if any part is NA (not blank nor checked), 
+# then the average becomes NA
+
+# Grading Q16 on the pre-test 
+## For years 15-16 & 16-17
+data_graded$q16.pre.c <- 
+  data_graded %>% 
+  select(q16a.pre.c:q16d.pre.c) %>% 
+  rowSums()/4
+## For year 14-15
+data_graded$q16.pre.c.1415 <- 
+  data_graded %>% 
+  select(q16a.pre.c.1415:q16c.pre.c.1415) %>% 
+  rowSums(na.rm = TRUE)/3
+ 
+## Grading Q16 on the post-test
+## For years 15-16 & 16-17
+data_graded$q16.post.c <- 
+  data_graded %>% 
+  select(q16a.post.c:q16d.post.c) %>% 
+  rowSums()/4
+## For year 14-15
+data_graded$q16.post.c.1415 <- 
+  data_graded %>% 
+  select(q16a.post.c.1415:q16c.post.c.1415) %>% 
+  rowSums(na.rm = TRUE)/3
+
+# Special case for NA for 1415
+# If all 3 values for a, b and c are NA for Q16 in 1415, then
+# q16 as a whole gets graded as NA
+data_graded <- 
+data_graded %>% 
+  mutate(q16.pre.c.1415 = 
+           if_else(is.na(q16a.pre.c.1415) & is.na(q16b.pre.c.1415) & 
+                     is.na(q16c.pre.c.1415),
+                   NaN, q16.pre.c.1415),
+         q16.post.c.1415 = 
+           if_else(is.na(q16a.post.c.1415) & is.na(q16b.post.c.1415) & 
+                     is.na(q16c.post.c.1415),
+                   NaN, q16.post.c.1415))
+
+# Keep only a single grading column for q16
+data_graded <- data_graded %>% 
+  mutate(q16.pre.c = if_else(year == "14-15", q16.pre.c.1415, q16.pre.c),
+         q16.post.c = if_else(year == "14-15", q16.post.c.1415, q16.post.c)) %>% 
+  select(-q16.pre.c.1415, -q16.post.c.1415, -year) 
+
+# Rename to Right/Wrong in data_graded
+data_graded <- data_graded %>% 
+  rename_with(~paste(., ".rw", sep = ""), cols = everything())
+
+data <- bind_cols(data, data_graded, .name_repair = "check_unique")
+```
+
+
+### Functions and DFs for Figure XX, Question Number Table ###
+```{r}
+library(reshape2)
+data_other <- data %>%
+  filter(textbook.classification2 != "Other")
+
+data_other$textbook.classification2 <- droplevels(data_other$textbook.classification2)
+
+data_other$textbook <- data_other$textbook.classification2
+
+first_pre = which(colnames(data_other)=="q16.pre.c.rw")
+last_pre = which(colnames(data_other)=="q47.pre.c.rw")
+first_post = which(colnames(data_other)=="q16.post.c.rw")
+last_post = which(colnames(data_other)=="q47.post.c.rw")
+
+Percent.Correct = c("Pre","Post", "Diff", "Comments") 
+
+subnames <- c("DC", "DS","CI","CI","CI","DS","DC","ST","ST","DC","CI","ST","ST","ST","ST","ST","DS","DS","Sim","Sim","DS","Sim","Sim","Sim","DS","DS","DC","ST","ST","CI","CI", "CI","ST")
+
+if (length(levels(data_other$textbook))==3) {
+  ISI_frame_pre <- data_other[which(data_other$textbook=="ISI"),c(first_pre:last_pre)]
+  ISI_frame_post <- data_other[which(data_other$textbook=="ISI"),c(first_post:last_post)]
+  SBI_frame_pre <- data_other[ which(data_other$textbook=="OtherSBI"),c(first_pre:last_pre)]
+  SBI_frame_post <- data_other[ which(data_other$textbook=="OtherSBI"),c(first_post:last_post)]
+  nonSBI_frame_pre <- data_other[ which(data_other$textbook=="NotSBI"),c(first_pre:last_pre)]
+  nonSBI_frame_post <- data_other[ which(data_other$textbook=="NotSBI"),c(first_post:last_post)]
+  
+  ## Function to make table average pre, post, diff (w/ comment) by textbook for each question
+  
+  tables_short <- function(questions_short){
+    for (i in questions_short){
+      question <- c(paste0("Question ", i, ": Pre"), paste0("Question ", i, ": Post"), paste0("Question ", i, ": Diff"),
+                    "Comments")
+      diff1 = round(mean(ISI_frame_post[,(i-15)],na.rm=TRUE) - mean(ISI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+      diff2 = round(mean(SBI_frame_post[,(i-15)],na.rm=TRUE) - mean(SBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+      diff3 = round(mean(nonSBI_frame_post[,(i-15)],na.rm=TRUE) - mean(nonSBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+      isi_c = NULL
+      other_c = NULL
+      non_c = NULL 
+      #Creating comments for ISI column#
+      if (round(mean(ISI_frame_post[,(i-15)],na.rm=TRUE),digits=2) < .2) {isi_c[i] = "still low at the end"}
+      if (diff1>=.15) {isi_c[i] = "improved a lot *"}
+      else if (diff1>=.10) {isi_c[i] = "improved"}
+      else if (diff1>=.05) {isi_c[i] = "improved a little"}
+      else if (abs(diff1) < 0.05 ) {isi_c[i] = "no change"}
+      else if (diff1< -.05) {isi_c[i] = "decreased"}
+      else {isi_c[i]=""}
+      #Creating comments for OtherSBI column#
+      if (round(mean(SBI_frame_post[,(i-15)],na.rm=TRUE),digits=2) < .2) {other_c[i] = "still low at the end"}
+      if (diff2>=.15) {other_c[i] = "improved a lot *"}
+      else if (diff2>=.10) {other_c[i] = "improved"}
+      else if (diff2>=.05) {other_c[i] = "improved a little"}
+      else if (abs(diff2) < 0.05 ) {other_c[i] = "no change"}
+      else if (diff2< -.05) {other_c[i] = "decreased"}
+      else {other_c[i]=""}
+      #Creating comments for NonSBI column#
+      if (round(mean(nonSBI_frame_post[,(i-15)],na.rm=TRUE),digits=2) < .2) {non_c[i] = "still low at the end"}
+      if (diff3>=.15) {non_c[i] = "improved a lot *"}
+      else if (diff3>=.10) {non_c[i] = "improved"}
+      else if (diff3>=.05) {non_c[i] = "improved a little"}
+      else if (abs(diff3) < 0.05 ) {non_c[i] = "no change"}
+      else if (diff3< -.05) {non_c[i] = "decreased"}
+      else {non_c[i]=""}
+      ISI = c(round(mean(ISI_frame_pre[,(i-15)],na.rm=TRUE),digits=2),round(mean(ISI_frame_post[,(i-15)],na.rm=TRUE),digits=2),diff1,isi_c[i])
+      OtherSBI = c(round(mean(SBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2),round(mean(SBI_frame_post[,(i-15)],na.rm=TRUE),digits=2),diff2,other_c[i])
+      NonSBI = c(round(mean(nonSBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2),round(mean(nonSBI_frame_post[,(i-15)],na.rm=TRUE),digits=2),diff3,non_c[i])
+      # print(paste("Question",i,sep=" "))
+      print(data.frame(question,ISI,OtherSBI,NonSBI,row.names=NULL)) 
+    }
+  }
+  
+  diff0=NULL
+  diff1=NULL
+  diff2=NULL
+  pre0=NULL
+  pre1=NULL
+  pre2=NULL
+  post0=NULL
+  post1=NULL
+  post2=NULL
+  
+  for (i in c(16:48)){ #changed to 48
+    diff0[i-15] = round(mean(ISI_frame_post[,(i-15)],na.rm=TRUE) - mean(ISI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+    pre0[i-15] = round(mean(ISI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+    post0[i-15] = round(mean(ISI_frame_post[,(i-15)],na.rm=TRUE),digits=2)
+    diff1[i-15] = round(mean(SBI_frame_post[,(i-15)],na.rm=TRUE) - mean(SBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+    diff2[i-15] = round(mean(nonSBI_frame_post[,(i-15)],na.rm=TRUE) - mean(nonSBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+    pre1[i-15] = round(mean(SBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+    pre2[i-15] = round(mean(nonSBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+    post1[i-15] = round(mean(SBI_frame_post[,(i-15)],na.rm=TRUE),digits=2)
+    post2[i-15] = round(mean(nonSBI_frame_post[,(i-15)],na.rm=TRUE),digits=2)
+  }
+  
+  diffdf <- data.frame(ISI=diff0, SBI=diff1, nonSBI=diff2, question=c(16:48)) #changed to 48
+  ddf <- melt(diffdf, id="question", variable.name = "Textbook", value.name = "Post-Pre")
+  isidf <- data.frame(Pre=pre0, Post=post0, question=seq(15.8,47.8))
+  idf <- melt(isidf, id="question", variable.name = "Pre.Post", value.name = "Avg")
+  idf$dsign <- sign(isidf$Post-isidf$Pre)
+  sbidf <- data.frame(Pre=pre1, Post=post1, question=c(16:48))
+  sdf <- melt(sbidf, id="question", variable.name = "Pre.Post", value.name = "Avg")
+  sbijitter <- data.frame(Pre=pre1, Post=post1, question=c(16:48))
+  sjitdf <- melt(sbijitter, id="question", variable.name = "Pre.Post", value.name = "Avg")
+  sjitdf$dsign <- sign(sbijitter$Post-sbijitter$Pre)
+  nondf <- data.frame(Pre=pre2, Post=post2, question=c(16:48))
+  ndf <- melt(nondf, id="question", variable.name = "Pre.Post", value.name = "Avg")
+  nonjitter <- data.frame(Pre=pre2, Post=post2, question=seq(16.2,48.2))
+  njitdf <- melt(nonjitter, id="question", variable.name = "Pre.Post", value.name = "Avg")
+  njitdf$dsign <- sign(nonjitter$Post-nonjitter$Pre)
+  mergedf <- cbind(rbind(data.frame(idf, Textbook="ISI"), data.frame(sjitdf, Textbook="SBI"), data.frame(njitdf, Textbook="NonSBI")), Category = subnames)
+  mergedf$dsign <- recode_factor(mergedf$dsign, `-1` = "Decrease", `0` = "Increase", `1` = "Increase")
+  
+  ## Function to make visuals of average pre-post by textbook for each question
+  
+  tables_visual <- function(statistic="Pre.Post", textbook="All", by="") {
+    
+    if (statistic == "Diff") {
+      if (textbook == "All") {
+        ggplot(data_other=ddf,aes(x=question,y=`Post-Pre`,colour=Textbook)) + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_point() + geom_line() + theme_bw() + ggtitle("Differences")
+      } else if (textbook == "ISI") {
+        qplot(c(16:48),diff0,xlab="Question",ylab="Post-Pre") + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_line() + theme_bw() + ggtitle("ISI Differences")
+      } else if (textbook == "SBI") {
+        qplot(c(16:48),diff1,xlab="Question",ylab="Post-Pre") + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_line() + theme_bw() + ggtitle("SBI Differences")
+      } else if (textbook == "nonSBI") {
+        qplot(c(16:48),diff2,xlab="Question",ylab="Post-Pre") + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_line() + theme_bw() + ggtitle("Non-SBI Differences")
+      }
+      
+    } else if (statistic == "Pre.Post") {
+      if (textbook == "ISI") {
+        ggplot(data_other=idf,aes(x=question,y=Avg)) + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question)) + theme_bw() + ggtitle("ISI")
+      } else if (textbook == "SBI") {
+        ggplot(data_other=sdf,aes(x=question,y=Avg)) + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question)) + theme_bw() + ggtitle("SBI")
+      } else if (textbook == "nonSBI") {
+        ggplot(data_other=ndf,aes(x=question,y=Avg)) + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question)) + theme_bw() + ggtitle("Non-SBI")
+      } else if (textbook == "All") {
+        if (by == "Category") {
+          ggplot(data_other=mergedf,aes(x=question,y=Avg,colour=Textbook)) + scale_x_continuous(breaks = seq(16,48,2)) +
+            geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question)) + facet_grid(.~Category) +
+            theme_bw() + ggtitle("ISI vs SBI vs Non-SBI by Concept Category")
+        } else if (by == "Sign") {
+          # g <- ggplot(data_other=mergedf,aes(x=question,y=Avg,colour=Textbook)) + scale_x_continuous(breaks = seq(16,47,2)) +
+          #   geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question)) + theme_bw() + ggtitle("ISI vs SBI vs Non-SBI by sign")
+          # g + facet_grid(rows = vars(dsign)) 
+          ggplot(data_other=mergedf,aes(x=question,y=Avg,colour=dsign)) + scale_x_continuous(breaks = seq(16,48,2)) +
+            geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question, linetype = Textbook)) + theme_bw() + ggtitle("ISI vs SBI vs Non-SBI")
+        } else {
+          ggplot(data_other=mergedf,aes(x=question,y=Avg,colour=Category)) + scale_x_continuous(breaks = seq(16,48,2)) +
+            geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question, linetype = Textbook)) + 
+            theme_bw() + ggtitle("ISI vs SBI vs Non-SBI")          
+        }
+      }
+    }
+  }
+}
+
+if (length(levels(data_other$textbook))==2) {
+  
+  SBI_frame_pre <- data_other[ which(data_other$textbook=="SBI"),c(first_pre:last_pre)]
+  SBI_frame_post <- data_other[ which(data_other$textbook=="SBI"),c(first_post:last_post)]
+  nonSBI_frame_pre <- data_other[ which(data_other$textbook=="NotSBI"),c(first_pre:last_pre)]
+  nonSBI_frame_post <- data_other[ which(data_other$textbook=="NotSBI"),c(first_post:last_post)]
+  
+  ## Function to make table average pre, post, diff (w/ comment) by textbook for each question
+  
+  tables_short <- function(questions_short){
+    for (i in questions_short){
+      diff1 = round(mean(SBI_frame_post[,(i-15)],na.rm=TRUE) - mean(SBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+      diff2 = round(mean(nonSBI_frame_post[,(i-15)],na.rm=TRUE) - mean(nonSBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+      sbi_c = NULL
+      non_c = NULL 
+      #Creating comments for SBI column#
+      if (round(mean(SBI_frame_post[,(i-15)],na.rm=TRUE),digits=2) < .2) {sbi_c[i] = "still low at the end"}
+      if (diff1>=.15) {sbi_c[i] = "improved a lot *"}
+      else if (diff1>=.10) {sbi_c[i] = "improved"}
+      else if (diff1>=.05) {sbi_c[i] = "improved a little"}
+      else if (abs(diff1) < 0.05 ) {sbi_c[i] = "no change"}
+      else if (diff1< -.05) {sbi_c[i] = "decreased"}
+      else {sbi_c[i]=""}
+      #Creating comments for NonSBI column#
+      if (round(mean(nonSBI_frame_post[,(i-15)],na.rm=TRUE),digits=2) < .2) {non_c[i] = "still low at the end"}
+      if (diff2>=.15) {non_c[i] = "improved a lot *"}
+      else if (diff2>=.10) {non_c[i] = "improved"}
+      else if (diff2>=.05) {non_c[i] = "improved a little"}
+      else if (abs(diff2) < 0.05 ) {non_c[i] = "no change"}
+      else if (diff2< -.05) {non_c[i] = "decreased"}
+      else {non_c[i]=""}
+      SBI = c(round(mean(SBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2),round(mean(SBI_frame_post[,(i-15)],na.rm=TRUE),digits=2),diff1,sbi_c[i])
+      NonSBI = c(round(mean(nonSBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2),round(mean(nonSBI_frame_post[,(i-15)],na.rm=TRUE),digits=2),diff2,non_c[i])
+      print(paste("Question",i,sep=" "))
+      print(data.frame(Percent.Correct,SBI,NonSBI,row.names=NULL)) 
+    }}
+  
+  diff1=NULL
+  diff2=NULL
+  pre1=NULL
+  pre2=NULL
+  post1=NULL
+  post2=NULL
+  
+  for (i in c(16:48)){
+    diff1[i-15] = round(mean(SBI_frame_post[,(i-15)],na.rm=TRUE) - mean(SBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+    diff2[i-15] = round(mean(nonSBI_frame_post[,(i-15)],na.rm=TRUE) - mean(nonSBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+    pre1[i-15] = round(mean(SBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+    pre2[i-15] = round(mean(nonSBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2)
+    post1[i-15] = round(mean(SBI_frame_post[,(i-15)],na.rm=TRUE),digits=2)
+    post2[i-15] = round(mean(nonSBI_frame_post[,(i-15)],na.rm=TRUE),digits=2)
+  }
+  
+  diffdf <- data.frame(SBI=diff1, nonSBI=diff2, question=c(16:48))
+  ddf <- melt(diffdf, id="question", variable.name = "Textbook", value.name = "Post-Pre")
+  sbidf <- data.frame(Pre=pre1, Post=post1, question=c(16:48))
+  sdf <- melt(sbidf, id="question", variable.name = "Pre.Post", value.name = "Avg")
+  nondf <- data.frame(Pre=pre2, Post=post2, question=c(16:48))
+  ndf <- melt(nondf, id="question", variable.name = "Pre.Post", value.name = "Avg")
+  sbijitter <- data.frame(Pre=pre1, Post=post1, question=seq(15.9,47.9))
+  sjitdf <- melt(sbijitter, id="question", variable.name = "Pre/Post", value.name = "Avg")
+  sjitdf$dsign <- sign(sbijitter$Post-sbijitter$Pre)
+  nonjitter <- data.frame(Pre=pre2, Post=post2, question=seq(16.1,48.1))
+  njitdf <- melt(nonjitter, id="question", variable.name = "Pre/Post", value.name = "Avg")
+  njitdf$dsign <- sign(nonjitter$Post-nonjitter$Pre)
+  
+#  mergedf <- cbind(rbind(data.frame(sjitdf, Textbook="SBI"), data.frame(njitdf, Textbook="NonSBI")), Category = subnames)
+  mergedf$dsign <- recode_factor(mergedf$dsign, `-1` = "Decrease", `0` = "Increase", `1` = "Increase")
+  
+  ## Function to make visuals of average pre-post by textbook for each question
+  
+  tables_visual <- function(statistic="Pre.Post", textbook="All", by="") {
+    
+    if (statistic == "Diff") {
+      if (textbook == "All") {
+        ggplot(data_other=ddf,aes(x=question,y=`Post-Pre`,colour=Textbook)) + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_point() + geom_line() + theme_bw() + ggtitle("Differences")
+      } else if (textbook == "SBI") {
+        qplot(c(16:48),diff1,xlab="Question",ylab="Post-Pre") + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_line() + theme_bw() + ggtitle("SBI Differences")
+      } else if (textbook == "nonSBI") {
+        qplot(c(16:48),diff2,xlab="Question",ylab="Post-Pre") + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_line() + theme_bw() + ggtitle("Non-SBI Differences")
+      }
+    } else if (statistic == "Pre.Post") {
+      if (textbook == "SBI") {
+        ggplot(data_other=sdf,aes(x=question,y=Avg)) + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question)) + theme_bw() + ggtitle("SBI")
+      } else if (textbook == "nonSBI") {
+        ggplot(data_other=ndf,aes(x=question,y=Avg)) + scale_x_continuous(breaks = seq(16,48,2)) +
+          geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question)) + theme_bw() + ggtitle("Non-SBI")
+      } else if (textbook == "All") {
+        if (by == "Category") {
+          ggplot(data_other=mergedf,aes(x=question,y=Avg,colour=Textbook)) + scale_x_continuous(breaks = seq(16,48,2)) +
+            geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question)) + facet_grid(.~Category) +
+            theme_bw() + ggtitle("SBI vs Non-SBI by Concept Category")
+        } else if (by == "Sign") {
+          g <- ggplot(data_other=mergedf,aes(x=question,y=Avg,colour=Textbook)) + scale_x_continuous(breaks = seq(16,48,2)) +
+            geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question)) + theme_bw() + ggtitle("SBI vs Non-SBI by sign")
+          g + facet_grid(rows = vars(dsign)) 
+        } else {
+          ggplot(data_other=mergedf,aes(x=question,y=Avg,colour=Textbook)) + scale_x_continuous(breaks = seq(16,48,2)) +
+            geom_point(aes(shape=Pre.Post)) + geom_line(aes(group = question)) + theme_bw() + ggtitle("SBI vs Non-SBI")
+        }
+      }
+    }
+  }
+}
+
+
+### OUTPUT OPTIONS ###
+
+## Print questions table *****
+# >=.15 improved a lot, >=.10 improved, >=.05 improved a little, -.05 to .05 no change, < -.05 decreased
+all_questions <- c(16:48)
+tables_short(all_questions)
+
+# Display graphs
+# default: statistic="Pre.Post", textbook="All", by=""
+# options:
+# statistic = "Pre.Post", "Diff"
+# textbook = "All", "ISI", "SBI", nonSBI"
+# by = "Category", "sign" (only works for Pre.Post, All)
+# tables_visual()
+# tables_visual("Diff")
+# tables_visual("Diff", "SBI")
+# tables_visual("Pre.Post", "nonSBI")
+# tables_visual(by="Category")
+# tables_visual(by="Sign")
+```
+
+
+### Figure 2 ###
+```{r}
+mergedfsort <- mergedf[order(mergedf$Category),]  
+mergedfsort$question2 <- c(1:7-.2,1:7-.2,1:7,1:7,1:7+.2,1:7+.2,           #7 CI questions
+                           8:11-.2,8:11-.2,8:11,8:11,8:11+.2,8:11+.2,     #4 DC questions
+                           12:18-.2,12:18-.2,12:18,12:18,12:18+.2,12:18+.2, #7 DS questions
+                           19:28-.2,19:28-.2,19:28,19:28,19:28+.2,19:28+.2,  #10 ST questions
+                           29:33-.2,29:33-.2,29:33,29:33,29:33+.2,29:33+.2)  #5 sim questions
+
+mergedfsort$Category  <- factor(mergedfsort$Category , levels = c("DC","DS", "Sim", "ST", "CI"))
+
+# choose increase/decrease colors here
+group.colors <- c(Increase = "mediumseagreen", Decrease = "dodgerblue3")
+
+Category_status <- c(
+  DC = "Data Collection",
+  DS = "Descriptive Statistics",
+  Sim = "Simulation",
+  ST = "Tests of Significance",
+  CI = "Confidence Intervals"
+)
+idx <- match(mergedfsort$Category, names(Category_status))
+mergedfsort$Category2 <- Category_status[idx]
+mergedfsort$Category2  <- factor(mergedfsort$Category2 , levels = c("Data Collection","Descriptive Statistics", "Simulation", "Tests of Significance", "Confidence Intervals"))
+
+# install.packages("ggthemes")
+library(ggthemes)
+ggplot(data=mergedfsort, aes(x=factor(question), y=Avg, colour=dsign)) + scale_x_discrete(breaks = 1:48) +
+  geom_point(aes(shape=Pre.Post), size=2) +
+  geom_line(aes(group = question, linetype=Textbook)) +
+  facet_grid(.~Category2, scales="free_x", space="free_x", labeller = labeller(Category2 = label_wrap_gen(10))) +
+  theme_calc() +
+  theme(strip.text.x = element_text(size=20), axis.text.y = element_text(size=16), legend.text = element_text(size=12)) +
+  scale_colour_manual(values = group.colors) +
+  scale_linetype_manual(values=c("solid", "longdash", "dotted"))+
+  labs(y=element_blank(),x=element_blank(),colour=element_blank(),shape=element_blank(),linetype=element_blank()) +
+  ggtitle("ISI vs SBI vs Non-SBI by Concept Category")
+```
+
+
+### Flag for Question Differences Between Textbooks ###
+```{r}
+Percent.Correct = c("Pre","Post") 
+
+if (length(levels(data_other$textbook))==3) {
+  ISI_frame_pre <- data_other[which(data_other$textbook=="ISI"),c(first_pre:last_pre)]
+  ISI_frame_post <- data_other[which(data_other$textbook=="ISI"),c(first_post:last_post)]
+  SBI_frame_pre <- data_other[which(data_other$textbook=="OtherSBI"),c(first_pre:last_pre)]
+  SBI_frame_post <- data_other[which(data_other$textbook=="OtherSBI"),c(first_post:last_post)]
+  nonSBI_frame_pre <- data_other[which(data_other$textbook=="NotSBI"),c(first_pre:last_pre)]
+  nonSBI_frame_post <- data_other[which(data_other$textbook=="NotSBI"),c(first_post:last_post)]
+  
+  ## Function to make table average pre, post by textbook for each question
+  
+  tables_diff <- function(questions_short){
+    for (i in questions_short){
+      question <- c(paste0("Question ", i, ": Pre"), paste0("Question ", i, ": Post"))
+      comp1_pre <- round(abs(mean(ISI_frame_pre[,(i-15)],na.rm=T) - mean(SBI_frame_pre[,(i-15)],na.rm=T)),digits=2)
+      comp2_pre <- round(abs(mean(ISI_frame_pre[,(i-15)],na.rm=T) - mean(nonSBI_frame_pre[,(i-15)],na.rm=T)),digits=2)
+      comp3_pre <- round(abs(mean(SBI_frame_pre[,(i-15)],na.rm=T) - mean(nonSBI_frame_pre[,(i-15)],na.rm=T)),digits=2)
+      
+      comp1_post <- round(abs(mean(ISI_frame_post[,(i-15)],na.rm=T) - mean(SBI_frame_post[,(i-15)],na.rm=T)),digits=2)
+      comp2_post <- round(abs(mean(ISI_frame_post[,(i-15)],na.rm=T) - mean(nonSBI_frame_post[,(i-15)],na.rm=T)),digits=2)
+      comp3_post <- round(abs(mean(SBI_frame_post[,(i-15)],na.rm=T) - mean(nonSBI_frame_post[,(i-15)],na.rm=T)),digits=2)
+      
+      if (comp1_pre >= .1 | comp2_pre >= .1 | comp3_pre >= .1 | comp1_post >= .1 | comp2_post >= .1 | comp3_post >= .1){
+        ISI = c(round(mean(ISI_frame_pre[,(i-15)],na.rm=TRUE),digits=2),
+                   round(mean(ISI_frame_post[,(i-15)],na.rm=TRUE),digits=2))
+        
+        SBI = c(round(mean(SBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2),
+                   round(mean(SBI_frame_post[,(i-15)],na.rm=TRUE),digits=2))
+        
+        nonSBI = c(round(mean(nonSBI_frame_pre[,(i-15)],na.rm=TRUE),digits=2),
+                   round(mean(nonSBI_frame_post[,(i-15)],na.rm=TRUE),digits=2))
+        
+        # output <- list()
+        # output[[1]] <- paste("Question", i)
+        # output[[2]] <- data.frame(Percent.Correct,ISI,Year.2,Year.3,row.names=NULL)
+        # print(output)
+        print(data.frame(question, ISI, SBI, nonSBI, row.names=NULL))
+      }    
+    }
+  }
+}
+all_questions <- c(16:48)
+tables_diff(all_questions)
+```
+
+
+### Flag for Question Differences by Year ###
+```{r}
+first_pre = which(colnames(data)=="q16.pre.c.rw")
+last_pre = which(colnames(data)=="q47.pre.c.rw")
+first_post = which(colnames(data)=="q16.post.c.rw")
+last_post = which(colnames(data)=="q47.post.c.rw")
+
+Percent.Correct = c("Pre","Post") 
+
+if (length(levels(data$year))==3) {
+  Year1_frame_pre <- data[which(data$year=="14-15"),c(first_pre:last_pre)]
+  Year1_frame_post <- data[which(data$year=="14-15"),c(first_post:last_post)]
+  Year2_frame_pre <- data[which(data$year=="15-16"),c(first_pre:last_pre)]
+  Year2_frame_post <- data[which(data$year=="15-16"),c(first_post:last_post)]
+  Year3_frame_pre <- data[which(data$year=="16-17"),c(first_pre:last_pre)]
+  Year3_frame_post <- data[which(data$year=="16-17"),c(first_post:last_post)]
+  
+  ## Function to make table average pre, post by year for each question
+  
+  tables_diff <- function(questions_short){
+    for (i in questions_short){
+      question <- c(paste0("Question ", i, ": Pre"), paste0("Question ", i, ": Post"))
+      comp1_pre <- round(abs(mean(Year1_frame_pre[,(i-15)],na.rm=T) - mean(Year2_frame_pre[,(i-15)],na.rm=T)),digits=2)
+      comp2_pre <- round(abs(mean(Year1_frame_pre[,(i-15)],na.rm=T) - mean(Year3_frame_pre[,(i-15)],na.rm=T)),digits=2)
+      comp3_pre <- round(abs(mean(Year2_frame_pre[,(i-15)],na.rm=T) - mean(Year3_frame_pre[,(i-15)],na.rm=T)),digits=2)
+      
+      comp1_post <- round(abs(mean(Year1_frame_post[,(i-15)],na.rm=T) - mean(Year2_frame_post[,(i-15)],na.rm=T)),digits=2)
+      comp2_post <- round(abs(mean(Year1_frame_post[,(i-15)],na.rm=T) - mean(Year3_frame_post[,(i-15)],na.rm=T)),digits=2)
+      comp3_post <- round(abs(mean(Year2_frame_post[,(i-15)],na.rm=T) - mean(Year3_frame_post[,(i-15)],na.rm=T)),digits=2)
+      
+      if (comp1_pre >= .1 | comp2_pre >= .1 | comp3_pre >= .1 | comp1_post >= .1 | comp2_post >= .1 | comp3_post >= .1){
+        Year.1 = c(round(mean(Year1_frame_pre[,(i-15)],na.rm=TRUE),digits=2),
+                   round(mean(Year1_frame_post[,(i-15)],na.rm=TRUE),digits=2))
+        
+        Year.2 = c(round(mean(Year2_frame_pre[,(i-15)],na.rm=TRUE),digits=2),
+                   round(mean(Year2_frame_post[,(i-15)],na.rm=TRUE),digits=2))
+        
+        Year.3 = c(round(mean(Year3_frame_pre[,(i-15)],na.rm=TRUE),digits=2),
+                   round(mean(Year3_frame_post[,(i-15)],na.rm=TRUE),digits=2))
+        
+        # output <- list()
+        # output[[1]] <- paste("Question", i)
+        # output[[2]] <- data.frame(Percent.Correct,Year.1,Year.2,Year.3,row.names=NULL)
+        # print(output)
+        print(data.frame(question, Year.1, Year.2, Year.3, row.names=NULL))
+      }    
+    }
+  }
+}
+all_questions <- c(16:48)
+tables_diff(all_questions)
+```
+
+
+### Overall Mean Percent Correct for each Question Pre/Post ###
+```{r}
+first_pre = which(colnames(data)=="q16.pre.c.rw")
+last_pre = which(colnames(data)=="q47.pre.c.rw")
+first_post = which(colnames(data)=="q16.post.c.rw")
+last_post = which(colnames(data)=="q47.post.c.rw")
+
+# Percent.Correct = c("Pre","Post", "Diff")
+
+if (length(levels(data$year))==3) {
+  frame_pre <- data[ , c(first_pre:last_pre)]
+  frame_post <- data[ , c(first_post:last_post)]
+  
+  ## Function to make table average pre, post by year for each question
+  
+  tables_by_question <- function(questions_short){
+    for (i in questions_short){
+      question <- paste0("Question: ", i)
+      pre <- round(mean(frame_pre[,(i-15)], na.rm = T), digits = 2)
+      post <- round(mean(frame_post[,(i-15)], na.rm = T), digits = 2)
+      diff <- round(mean(frame_post[,(i-15)],na.rm=T) - mean(frame_pre[,(i-15)],na.rm=T),digits=2)
+
+      if (i-15 == 1)
+      {
+        output = data.frame(question, pre, post, diff, row.names=NULL)
+      }
+      else {
+        temp <- (data.frame(question,pre,post,diff,row.names=NULL))
+        output <- rbind(output, temp)
+      }
+    }
+    print(output)
+  }
+}
+all_questions <- c(16:48)
+tables_by_question(all_questions)
+```
+

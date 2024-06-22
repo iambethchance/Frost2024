@@ -1,0 +1,434 @@
+---
+title: "Optional Subsetting"
+author: Ajay Patel
+output: html_notebook
+---
+
+
+
+### Reading in the Data ###
+```{r}
+library(plyr)
+library(tidyverse)
+
+# Added 5/2 by Sean Leader:
+library(here)
+#
+
+load(url("http://www.rossmanchance.com/iscam3/ISCAM.RData"))
+
+#### Reading in All Years Data - 14699 obs ####
+
+# Original read-in message, replaced with code below
+#alldata <- read.csv("/Users/ajaypatel21/Desktop/Frost/All Years Final v3 Public.csv", stringsAsFactors #= T)
+
+# Added 5/2 by Sean Leader:
+alldata <- read.csv(here::here("Data", "All Years Final v3 Public.csv"), stringsAsFactors = TRUE)
+
+data <- alldata
+```
+
+
+```{r}
+# Moved 5/2 by Sean Leader to separate code chunk for clarity
+
+### Textbook Classification Table ####
+### Shows how which textbooks got classified ###
+# textbook_table <- data %>%
+#   select(textbook.used, textbook.classification, year) %>%
+#   group_by(textbook.used, textbook.classification, year) %>%
+#   tally()
+ 
+# write.csv(textbook_table, "Data/Textbook Classification Table.csv", row.names = F)
+```
+
+
+
+
+### Keep students who only took Pre and Post ###
+```{r}
+### Subset of data where person consented on both pre and post ####
+## 14792 to 11800: Note that due to previous versions of data that have already been subsetted, only year 3 has ##
+## students who answered NA on Opt.out_pre/post ##
+
+data <- data %>%
+  filter(is.na(opt.out.pre) == F & is.na(opt.out.post) == F)
+```
+
+
+### Remove low response rate pre and post ###
+```{r}
+### Lose up to 648 obs removing low pre RR - alldata ###
+### Lose up to 34 obs removing low pre RR - data (keeping students who only took pre and post) ###
+data <- data[data$c.rr.pre >= .8,]
+
+### Lose up to 2449 obs by removing low post RR - alldata  ###
+### Lose up to 35 obs by removing low post RR - data (keeping students who only took pre and post)###
+data <- data[data$c.rr.post >= .8,]
+
+### If you do both of the above steps, you should have lost 77 obs total
+```
+
+
+### Removes extreme achievable gain ###
+```{r}
+### Lose up to 674 obs by removing low ach_gain_24 (-1.1) - alldata ###
+### Lose up to 89 obs by removing low ach_gain_24 (-2) - alldata ###
+### Lose up to 606 obs by removing low ach_gain_33 (-1.1) - alldata ###
+### Lose up to 92 obs by removing low ach_gain_33 (-2) - alldata ###
+
+### Lose up to 13 obs by removing low ach_gain_24 (-1.1) - data (keeping students who only took pre and post) ###
+### Lose up to 2 obs by removing low ach_gain_24 (-2) - data (keeping students who only took pre and post) ###
+### Lose up to 7 obs by removing low ach_gain_33 (-1.1) - data (keeping students who only took pre and post) ###
+### Lose up to 2 obs by removing low ach_gain_33 (-2) - data (keeping students who only took pre and post) ###
+
+data <- data[data$ach.gain.24 > -1.1,]
+```
+
+
+### Remove ISCAM and own ###
+```{r}
+# #### Remove ISCAM students ####
+# ### Lose up to 113 obs by taking out ISCAM - alldata ###
+# ### Lose up to 111 obs by taking out ISCAM - data (keeping students who only took pre and post) ###
+# data <- data[data$textbook.classification != "ISCAM",]
+# data$textbook.classification <- droplevels(data$textbook.classification)
+# 
+# # ### Re-orders if you remove only ISCAM  ###
+# # data$textbook.classification <- factor(data$textbook.classification, levels = c("ISI", "ISI1st", "OtherSBI", "NotSBI", "NotSBI2", "Other"))
+# 
+# 
+# #### REMOVE OWN PEOPLE ####
+# ### Lose up to 344 obs by taking out own - alldata ###
+# ### Lose up to 268 obs by taking out own - data (keeping students who only took pre and post) ###
+# data <- data[data$textbook.classification != "Other",]
+# data$textbook.classification <- droplevels(data$textbook.classification)
+# 
+# # ### Re-orders if you remove only own  ###
+# # data$textbook.classification <- factor(data$textbook.classification, levels = c("ISI", "ISI1st", "OtherSBI", "NotSBI", "NotSBI2", "ISCAM"))
+# 
+# 
+# ### Re-orders if you remove both ISCAM and own ###
+# data$textbook.classification <- factor(data$textbook.classification, levels = c("ISI", "ISI1st", "OtherSBI", "NotSBI", "NotSBI2"))
+```
+
+
+### Remove calculus math.prereq ###
+```{r}
+### Lose up to 513 obs by taking out calculus - alldata ###
+### Lose up to 425 obs by taking out calculus - data (keeping only students who only took pre and post) ###
+### Note, that removing Calculus prereq also removes all the ISCAM from textbook.classification ###
+data <- data %>%
+  filter(math.prereq != "Calculus" | is.na(math.prereq) == T)
+
+data$math.prereq <- droplevels(data$math.prereq)
+data$textbook.classification <- droplevels(data$textbook.classification)
+```
+
+
+#### RUN LINE TO TAKE OUT HS STUDENTS (Only based on Carnegie) ####
+```{r}
+### Lose up to 1466 obs by taking out HS students - alldata  ###
+### Lose up to 793 obs by taking out HS students - data (keeping students who only took pre and post) ###
+data <- data %>%
+  filter(carnegie.classification != "High School")
+
+### NOTE, when removing HS student both Carnegie and student.type need to be refactored ###
+### There are no more "High School Students" in student.type ###
+data$carnegie.classification <- droplevels(data$carnegie.classification)
+data$student.type <- droplevels(data$student.type)
+
+### Re-orders the factors ###
+data$carnegie.classification <- factor(data$carnegie.classification, levels = c("Community College", "Baccalaureate College", "Master's", "Doctoral Universities"))
+```
+
+
+#### Take out class size less than 9 ####
+```{r}
+### Lose up to 57 obs by taking out reported small sections (leaving NAs in) - alldata ###
+### Lose up to 324 obs by taking out small sections and NAs - alldata ###
+
+### Lose up to 35 obs by taking out reported small sections (leaving NAs in) - alldata ###
+### Lose up to 302 obs by taking out small sections and NAs - alldata ###
+
+# Uncommented on 5/2 by Sean Leader 
+data <- data[(data$class.size.end > 9 | is.na(data$class.size.end) == T), ]
+```
+
+
+### Remove low section c RR ###
+```{r}
+### Lose up to 2007 obs by removing sections with low rr ###
+
+# No code currently available to remove low section response rate
+```
+
+
+### Checks the number of NAs in each column by year ###
+```{r}
+data %>%
+  group_by(year) %>%
+  summarise_all(funs(sum(is.na(.))))
+```
+
+
+### Amelia Package ###
+```{r}
+### NOTE, Amelia imputations do not work with factors and characters - have to change to numeric ###
+### NOTE, Amelia should be run with data and not alldata due to high volume of missing values and students who don't take pre or post test ###
+
+library(Amelia)
+
+### Imputes student mean attitudes, demographics, GPA, math_satact_flag, SATACTzscore, overall attitude ###
+### NOTE, I am not using firstgen, race_origin, and is.white since these variables would have been imputed but they were not actually asked in year 1, hence the values should be missing ###
+
+data_amelia <- data
+
+### Changes factor variables to character ###
+data_amelia$is.major.course <- as.character(data_amelia$is.major.course)
+data_amelia$field.major <- as.character(data_amelia$field.major)
+data_amelia$grade.expectation.pre <- as.character(data_amelia$grade.expectation.pre)
+data_amelia$grade.expectation.post <- as.character(data_amelia$grade.expectation.post)
+data_amelia$gender <- as.character(data_amelia$gender)
+data_amelia$has.taken.stat.course <- as.character(data_amelia$has.taken.stat.course)
+data_amelia$prev.stat.course <- as.character(data_amelia$prev.stat.course)
+data_amelia$status <- as.character(data_amelia$status)
+data_amelia$math.satact.flag <- as.character(data_amelia$math.satact.flag)
+
+### Changes the levels of variables to numeric ###
+data_amelia$is.major.course[data_amelia$is.major.course == "major course"] <- 1
+data_amelia$is.major.course[data_amelia$is.major.course == "not major course"] <- 0
+data_amelia$field.major[data_amelia$field.major == "Arts and humanities"] <- 1
+data_amelia$field.major[data_amelia$field.major == "Natural and applied sciences"] <- 2
+data_amelia$field.major[data_amelia$field.major == "Other"] <- 3
+data_amelia$field.major[data_amelia$field.major == "Social sciences"] <- 4
+
+data_amelia$grade.expectation.pre <- mapvalues(data_amelia$grade.expectation.pre,
+                                                  from = c("A+", "A", "A-", "B+", "B", "B-","C+", "C", "C-",
+                                                           "D+", "D", "D-", "F"),
+                                                  to = c(1:13))
+
+
+data_amelia$grade.expectation.post <- mapvalues(data_amelia$grade.expectation.post,
+                                               from = c("A+", "A", "A-", "B+", "B", "B-",
+                                                      "C+", "C", "C-", "D+", "D", "D-", "F"),
+                                               to = c(1:13))
+
+data_amelia$gender[data_amelia$gender == "Female"] <- 1
+data_amelia$gender[data_amelia$gender == "Male"] <- 0
+data_amelia$has.taken.stat.course[data_amelia$has.taken.stat.course == "No"] <- 0
+data_amelia$has.taken.stat.course[data_amelia$has.taken.stat.course == "Yes"] <- 1
+data_amelia$prev.stat.course[data_amelia$prev.stat.course == "No"] <- 0
+data_amelia$prev.stat.course[data_amelia$prev.stat.course == "Yes (Not AP)"] <- 1
+data_amelia$prev.stat.course[data_amelia$prev.stat.course == "Yes (AP)"] <- 2
+
+data_amelia$status <- mapvalues(data_amelia$status,
+                               from = c("Other", "High School Student", "Freshman in college", "Sophomore in college",
+                                      "Junior in college", "Senior in college", "Fifth or more year in college",
+                                      "Non-traditional/part-time student in college", "Graduate Student"),
+                               to = c(0:8))
+
+data_amelia$math.satact.flag[data_amelia$math.satact.flag == "SAT"] <- 1
+data_amelia$math.satact.flag[data_amelia$math.satact.flag == "ACT"] <- 2
+
+### Ensures changed variables are numeric and not character/factor ###
+data_amelia$is.major.course <- as.numeric(data_amelia$is.major.course)
+data_amelia$field.major <- as.numeric(data_amelia$field.major)
+data_amelia$grade.expectation.pre <- as.numeric(data_amelia$grade.expectation.pre)
+data_amelia$grade.expectation.post <- as.numeric(data_amelia$grade.expectation.post)
+data_amelia$gender <- as.numeric(data_amelia$gender)
+data_amelia$has.taken.stat.course <- as.numeric(data_amelia$has.taken.stat.course)
+data_amelia$prev.stat.course <- as.numeric(data_amelia$prev.stat.course)
+data_amelia$status <- as.numeric(data_amelia$status)
+data_amelia$math.satact.flag <- as.numeric(data_amelia$math.satact.flag)
+
+
+### math.perf.pre through field.major for amelia imputing ###
+ord_vars <- names(data_amelia[c(225:238)])
+
+### Creates a bound so that min gpa = 1.0 and max gpa = 4.0 ###
+gpa_bound <- matrix(c(239, 1.0, 4.0), nrow = 1, ncol = 3)
+
+### Runs the amelia imputation - should not have any missing values in this subset of data ###
+### first argument = dataset, m = number of imputations/outputted data sets, bounds = variables that have any bounds ###
+### noms = binary variables, ords = factor variables as numeric, idvars = variables that will be outputted but will not ###
+### be imputed ###
+
+### X to q9.f.post.a, firstgen to year, days.meet to q4041.post.c, c.rr.pre to a.rr.post, pre.perc.33 to d ###
+myidvars <- names(data_amelia[c(1:224, 247:266, 268:318, 331:334, 337:387)])
+
+am.out <- amelia(data_amelia, m=1,
+                 idvars = myidvars,
+                 bounds = gpa_bound,
+                 noms = c("gender", "has.taken.stat.course"),
+                 ords = c(ord_vars, "grade.expectation.pre", "grade.expectation.post",
+                          "prev.stat.course", "status", "math.satact.flag"))
+
+### Saves as a new CSV file ###
+
+# Changed 5/2 by Sean Leader to go to a Data folder in specific.
+write.amelia(am.out, file.stem = "Data/outdata")
+```
+
+
+### Re-reverse Amelia code and write out ###
+```{r}
+
+# Changed 5/2 by Sean Leader to use the here package to load the previous dataset
+data_imputed <- read.csv(here::here("Data", "outdata1.csv"))
+
+data_imputed$gpa <- round(data_imputed$gpa, 2)
+
+### Changes the levels of variables from numeric to factor ###
+data_imputed$is.major.course[data_imputed$is.major.course == 1] <- "major course"
+data_imputed$is.major.course[data_imputed$is.major.course == 0] <- "not major course"
+data_imputed$field.major[data_imputed$field.major == 1] <- "Arts and humanities"
+data_imputed$field.major[data_imputed$field.major == 2] <- "Natural and applied sciences"
+data_imputed$field.major[data_imputed$field.major == 3] <- "Other"
+data_imputed$field.major[data_imputed$field.major == 4] <- "Social sciences"
+
+data_imputed$grade.expectation.pre <- mapvalues(data_imputed$grade.expectation.pre,
+                                                from = c(1:13),
+                                                to = c("A+", "A", "A-", "B+", "B", "B-","C+", "C", "C-",
+                                                         "D+", "D", "D-", "F"))
+
+
+data_imputed$grade.expectation.post <- mapvalues(data_imputed$grade.expectation.post,
+                                                 from = c(1:13),
+                                                 to = c("A+", "A", "A-", "B+", "B", "B-",
+                                                      "C+", "C", "C-", "D+", "D", "D-", "F"))
+
+data_imputed$gender[data_imputed$gender == 1] <- "Female"
+data_imputed$gender[data_imputed$gender == 0] <- "Male"
+data_imputed$has.taken.stat.course[data_imputed$has.taken.stat.course == 0] <- "No"
+data_imputed$has.taken.stat.course[data_imputed$has.taken.stat.course == 1] <- "Yes"
+data_imputed$prev.stat.course[data_imputed$prev.stat.course == 0] <- "No"
+data_imputed$prev.stat.course[data_imputed$prev.stat.course == 1] <- "Yes (Not AP)"
+data_imputed$prev.stat.course[data_imputed$prev.stat.course == 2] <- "Yes (AP)"
+
+data_imputed$status <- mapvalues(data_imputed$status,
+                                 from = c(0:8),
+                                 to = c("Other", "High School Student", "Freshman in college", "Sophomore in college",
+                                      "Junior in college", "Senior in college", "Fifth or more year in college",
+                                      "Non-traditional/part-time student in college", "Graduate Student"))
+
+data_imputed$is.white[data_imputed$is.white == 1] <- T
+data_imputed$is.white[data_imputed$is.white == 0] <- F
+
+data_imputed$math.satact.flag[data_imputed$math.satact.flag == 1] <- "SAT"
+data_imputed$math.satact.flag[data_imputed$math.satact.flag == 2] <- "ACT"
+
+
+### Ensures changed variables are numeric and not character/factor ###
+data_imputed$is.major.course <- as.factor(data_imputed$is.major.course)
+data_imputed$field.major <- as.factor(data_imputed$field.major)
+data_imputed$grade.expectation.pre <- as.factor(data_imputed$grade.expectation.pre)
+data_imputed$grade.expectation.post <- as.factor(data_imputed$grade.expectation.post)
+data_imputed$gender <- as.factor(data_imputed$gender)
+data_imputed$has.taken.stat.course <- as.factor(data_imputed$has.taken.stat.course)
+data_imputed$prev.stat.course <- as.factor(data_imputed$prev.stat.course)
+data_imputed$status <- as.factor(data_imputed$status)
+data_imputed$math.satact.flag <- as.factor(data_imputed$math.satact.flag)
+
+### Since mean attitudes were imputed, need to recalculate attitude change variables ###
+data_imputed$affect.change <- data_imputed$affect.post - data_imputed$affect.pre
+data_imputed$cognitive.competence.change <- data_imputed$cognitive.competence.post - data_imputed$cognitive.competence.pre
+data_imputed$difficulty.change <- data_imputed$difficulty.post - data_imputed$difficulty.pre
+data_imputed$effort.change <- data_imputed$effort.post - data_imputed$effort.pre
+data_imputed$interest.change <- data_imputed$interest.post - data_imputed$interest.pre
+data_imputed$value.change <- data_imputed$value.post - data_imputed$value.pre
+
+### Need to recalculate section level variables because of imputation ### 
+data_imputed$answered.pre <- 1
+data_imputed$answered.pre[data_imputed$pre.perc.24 == 0] <- 0
+
+data_imputed$answered.post <- 1
+data_imputed$answered.post[data_imputed$post.perc.24 == 0] <- 0
+
+data_imputed$answered.both <- 1
+data_imputed$answered.both[data_imputed$pre.perc.24 == 0 | data_imputed$post.perc.24 == 0] <- 0
+
+data_imputed <- data_imputed %>%
+  group_by(instructor.section, year) %>%
+  mutate(section.num.responded = n(), 
+         section.pre.responded = sum(answered.pre, na.rm = T),
+         section.post.responded = sum(answered.post, na.rm = T),
+         section.both.responded = sum(answered.both, na.rm = T),
+         # section.c.rr1 = section.both.responded/section.pre.responded, 
+         # section.c.rr2 = section.post.responded/section.pre.responded,
+         # section.pre.rr = section.pre.responded/class.size.start,
+         # section.post.rr = section.post.responded/class.size.end,
+         # section.pre.rr.new = section.pre.responded/section.num.responded,
+         # section.post.rr.new = section.post.responded/section.num.responded,
+         section.c.rr = section.both.responded/class.size.start, 
+         section.ach.gain.24 = mean(ach.gain.24, na.rm = T),
+         section.pre.perc.24 = mean(pre.perc.24, na.rm = T),
+         section.post.perc.24 = mean(post.perc.24, na.rm = T),         
+         section.gpa = mean(gpa, na.rm = T),
+         section.satact.zscore = mean(satact.zscore, na.rm = T),
+         section.affect.pre = mean(affect.pre, na.rm = T),
+         section.affect.post = mean(affect.post, na.rm = T),
+         section.cognitive.competence.pre = mean(cognitive.competence.pre, na.rm = T),
+         section.cognitive.competence.post = mean(cognitive.competence.post, na.rm = T),
+         section.difficulty.pre = mean(difficulty.pre, na.rm = T),
+         section.difficulty.post = mean(difficulty.post, na.rm = T),
+         section.effort.pre = mean(effort.pre, na.rm = T),
+         section.effort.post = mean(effort.post, na.rm = T),
+         section.interest.pre = mean(interest.pre, na.rm = T),
+         section.interest.post = mean(interest.post, na.rm = T),
+         section.value.pre = mean(value.pre, na.rm = T),
+         section.value.post = mean(value.post, na.rm = T),
+         section.overall.attitude.pre = mean(overall.attitude.pre, na.rm = T),
+         section.overall.attitude.post = mean(overall.attitude.post, na.rm = T),
+         var.pre = var(pre.perc.24, na.rm = T),
+         var.post = var(post.perc.24, na.rm = T)
+         ) %>%
+  ungroup() %>%
+  mutate(d = (section.post.perc.24 - section.pre.perc.24) / sqrt((var.pre+var.post)/2))
+
+
+### Changing NA's to Unknown ###
+data_imputed$class.session.length[is.na(data_imputed$class.session.length) == T] <- "Unknown"
+data_imputed$class.size.start.ind[is.na(data_imputed$class.size.start.ind) == T] <- "Unknown"
+data_imputed$class.size.end.ind[is.na(data_imputed$class.size.end.ind) == T] <- "Unknown"
+data_imputed$class.meet.weeks.ind[is.na(data_imputed$class.meet.weeks.ind) == T] <- "Unknown"
+data_imputed$time.meet[is.na(data_imputed$time.meet) == T] <- "Unknown"
+data_imputed$incentive.pre[is.na(data_imputed$incentive.pre) == T] <- "Unknown"
+data_imputed$incentive.post[is.na(data_imputed$incentive.post) == T] <- "Unknown"
+data_imputed$math.prereq[is.na(data_imputed$math.prereq) == T] <- "Unknown"
+data_imputed$student.type[is.na(data_imputed$student.type) == T] <- "Unknown"
+data_imputed$firstgen[is.na(data_imputed$firstgen) == T] <- "Unknown"
+data_imputed$race.origin[is.na(data_imputed$race.origin) == T] <- "Unknown"
+data_imputed$is.white[is.na(data_imputed$is.white) == T] <- "Unknown"
+data_imputed$gaise.familiar[is.na(data_imputed$gaise.familiar) == T] <- "Unknown"
+data_imputed$department.type[is.na(data_imputed$department.type) == T] <- "Unknown"
+data_imputed$is.stats.department[is.na(data_imputed$is.stats.department) == T] <- "Unknown"
+data_imputed$analyzing.data.experience[is.na(data_imputed$analyzing.data.experience) == T] <- "Unknown"
+data_imputed$position.classification[is.na(data_imputed$position.classification) == T] <- "Unknown"
+data_imputed$advanced.stats.degree.type[is.na(data_imputed$advanced.stats.degree.type) == T] <- "Unknown"
+data_imputed$lecture.type[is.na(data_imputed$lecture.type) == T] <- "Unknown"
+data_imputed$TA[is.na(data_imputed$TA) == T] <- "Unknown"
+data_imputed$admin.pre.location[is.na(data_imputed$admin.pre.location) == T] <- "Unknown"
+data_imputed$admin.post.location[is.na(data_imputed$admin.post.location) == T] <- "Unknown"
+data_imputed$admin.pre.time[is.na(data_imputed$admin.pre.time) == T] <- "Unknown"
+data_imputed$admin.post.time[is.na(data_imputed$admin.post.time) == T] <- "Unknown"
+data_imputed$isi.workshop[is.na(data_imputed$isi.workshop) == T] <- "Unknown"
+data_imputed$days.meet[is.na(data_imputed$days.meet) == T] <- "Unknown"
+data_imputed$years.teaching.intro.stats.binned[is.na(data_imputed$years.teaching.intro.stats.binned) == T] <- "Unknown"
+data_imputed$years.teaching.experience.binned[is.na(data_imputed$years.teaching.experience.binned) == T] <- "Unknown"
+data_imputed$percent.lecture.binned[is.na(data_imputed$percent.lecture.binned) == T] <- "Unknown"
+
+# Changed 5/2 by Sean Leader to go to a data folder
+write.csv(data_imputed, "Data/Post Optional Subsetting Imputed.csv")
+```
+
+
+### Writing out non-Imputed Data ###
+```{r}
+# Changed 5/2 by Sean Leader to go to a data folder
+write.csv(data, "Data/Post Optional Subsetting.csv")
+```
+
+
+
+

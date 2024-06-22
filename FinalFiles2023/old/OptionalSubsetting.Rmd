@@ -1,0 +1,159 @@
+---
+title: "Optional Subsetting"
+author: Ajay Patel and Sean Leader
+output: html_notebook
+---
+
+### Reading in the Data ###
+```{r}
+library(plyr)
+library(tidyverse)
+#library(here)
+
+#### Reading in All Years Data - 14792 obs ####
+#alldata <- read.csv(here::here("Data", "All Years Final Public.csv"), stringsAsFactors = TRUE)
+alldata <- read.csv("All Years Final Public.csv", stringsAsFactors = TRUE)
+
+data <- alldata
+nrow(data)
+```
+### Keep students who only took Pre and Post ###
+```{r}
+### Subset of data where person consented on both pre and post ####
+## 14792 to 11800: Note that due to previous subsetting, only year 3 has students who answered NA on Opt.out_pre/post ##
+
+data <- data %>%
+  filter(is.na(opt.out.pre) == F & is.na(opt.out.post) == F)
+```
+
+
+### Remove students with low response rate pre and post ###
+```{r}
+### c.rr.pre = proportion of non NA values for concept questions (Q17 on) in each row
+data$post.perc.24
+data$post.perc.33
+data$pre.perc.24
+data$pre.perc.33
+c.rr.pre
+c.rr.post
+
+
+### 648 obs with low pre RR - alldata ###
+### 34 obs with low pre RR - data (keeping students who only took pre and post) ###
+data <- data[data$c.rr.pre >= .8,]
+
+### 2449 obs with low post RR - alldata  ###
+### 35 obs with low post RR - data (keeping students who only took pre and post)###
+data <- data[data$c.rr.post >= .8,]
+
+### If you do both of the above steps, removes 77 obs total
+```
+
+
+### Removes extreme achievable gain ###
+```{r}
+### c.post.cc
+
+### ach_gain_33 = (post-pre)/(1-pre)
+### ach_gain_24 uses the question sets
+
+### alldata ###
+### 674 obs with low ach_gain_24 (-1.1)
+### 89 obs wtih low ach_gain_24 (-2)
+### 606 with low ach_gain_33 (-1.1)
+### 92 obs with low ach_gain_33 (-2)
+
+### After subsetting students who only took pre and post ###
+### 13 obs with low ach_gain_24 (-1.1) 
+### 2 obs with low ach_gain_24 (-2) 
+### 7 obs with low ach_gain_33 (-1.1) 
+### 2 obs with low ach_gain_33 (-2)
+
+data <- data[data$ach.gain.24 > -1.1,]
+```
+
+### Remove ISCAM and own ###
+```{r}
+# #### Remove ISCAM students ####
+# ### Lose up to 113 obs by taking out ISCAM - alldata ###
+# ### Lose up to 111 obs by taking out ISCAM - data (keeping students who only took pre and post) ###
+# data <- data[data$textbook.classification != "ISCAM",]
+# data$textbook.classification <- droplevels(data$textbook.classification)
+# 
+# # ### Re-orders if you remove only ISCAM  ###
+# # data$textbook.classification <- factor(data$textbook.classification, levels = c("ISI", "ISI1st", "OtherSBI", "NotSBI", "NotSBI2", "Other"))
+# 
+# 
+# #### Remove instructors using "own" materials ####
+# ### Lose up to 344 obs by taking out own - alldata ###
+# ### Lose up to 268 obs by taking out own - data (keeping students who only took pre and post) ###
+# data <- data[data$textbook.classification != "Other",]
+# data$textbook.classification <- droplevels(data$textbook.classification)
+ 
+# # ### Re-orders if you remove only own  ###
+# # data$textbook.classification <- factor(data$textbook.classification, levels = c("ISI", "ISI1st", "OtherSBI", "NotSBI", "NotSBI2", "ISCAM"))
+# 
+# 
+# ### Re-orders if you remove both ISCAM and own ###
+# data$textbook.classification <- factor(data$textbook.classification, levels = c("ISI", "ISI1st", "OtherSBI", "NotSBI", "NotSBI2"))
+```
+
+
+### Remove calculus math.prereq ###
+```{r}
+### Lose up to 513 obs by taking out calculus - alldata ###
+### Lose up to 425 obs by taking out calculus - data (keeping only students who only took pre and post) ###
+### Note, that removing Calculus prereq also removes all the ISCAM from textbook.classification ###
+data <- data %>%
+  filter(math.prereq != "Calculus" | is.na(math.prereq) == T)
+
+data$math.prereq <- droplevels(data$math.prereq)
+data$textbook.classification <- droplevels(data$textbook.classification)
+```
+
+
+#### RUN LINE TO TAKE OUT HS STUDENTS (Only based on Carnegie) ####
+```{r}
+### 1466 HS students - alldata  ###
+### 793- data (keeping students who only took pre and post) ###
+data <- data %>%
+  filter(carnegie.classification != "High School")
+
+### NOTE, when removing HS student both Carnegie and student.type need to be refactored ###
+### There are no more "High School Students" in student.type ###
+data$carnegie.classification <- droplevels(data$carnegie.classification)
+data$student.type <- droplevels(data$student.type)
+
+### Re-orders the factors ###
+data$carnegie.classification <- factor(data$carnegie.classification, levels = c("Community College", "Baccalaureate College", "Master's", "Doctoral Universities"))
+```
+
+
+#### Take out class size (instructor reported at end of course) less than 9 ####
+```{r}
+### 57 obs have small sections (leaving NAs in) - alldata ###
+### 324 obs have small sections and NAs - alldata ###
+
+### 35 obs have small sections (leaving NAs in) - alldata ###
+### 302 obs have small sections and NAs - alldata ###
+
+#suggest leaving in NAs
+
+#data <- data[(data$class.size.end > 9 | is.na(data$class.size.end) == T), ]
+```
+
+### Checks the number of NAs in each column by year ###
+```{r}
+data %>%
+  group_by(year) %>%
+  summarise_all(funs(sum(is.na(.))))
+```
+
+### Writing out data ###
+```{r}
+write.csv(data, "Post Optional Subsetting.csv")
+```
+
+
+
+

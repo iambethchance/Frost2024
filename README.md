@@ -1,5 +1,5 @@
 # Frost2024
-Add to the articles list 
+Add to the articles list  (Read more me so I donn't have to?!)
 [2406.07756v1.pdf](https://github.com/user-attachments/files/15935134/2406.07756v1.pdf)
 
 https://www.tandfonline.com/doi/full/10.1080/26939169.2024.2333736

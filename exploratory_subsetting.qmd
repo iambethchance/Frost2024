@@ -1,0 +1,47 @@
+---
+title: "exploratory subsetting"
+format: html
+editor: visual
+---
+
+```{r}
+# packages
+library(dplyr)
+library(readr)
+
+# data
+allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
+head(allYrsFinal)
+```
+
+# Only Pre-test
+
+```{r}
+# drop NAs for opt.out.pre
+# 14210 obs (lose 582 obs)
+
+allYrsFinal |>
+  filter(!is.na(opt.out.pre))
+```
+# Only Post-test
+```{r}
+allYrsFinal |>
+  filter(!is.na(opt.out.post))
+
+# 12382 obs (lose 2410 obs)
+```
+# Took both Pre and Post 
+```{r}
+preAndPost <- allYrsFinal |>
+  filter(!(is.na(opt.out.post) | is.na(opt.out.pre)))
+
+# 11800 (lose 2992 obs)
+```
+
+# Remove low time spent on assessments (for those who took both pre and post)
+```{r}
+preAndPost |>
+  filter(test.time.pre > 5 & test.time.post > 5)
+
+# 11787 obs (lose 3 obs)
+```

@@ -1,4 +1,6 @@
 # Frost2024
+Reading list https://docs.google.com/document/d/1mWrs2Wdc_dq46Hl2QxCmtp0AwKkGVRCils57Kbwi2xs/edit
+
 Add to the articles list  (Read more me so I donn't have to?!)
 [2406.07756v1.pdf](https://github.com/user-attachments/files/15935134/2406.07756v1.pdf)
 

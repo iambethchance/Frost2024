@@ -13,5 +13,8 @@ https://iase-web.org/icots/11/proceedings/pdfs/ICOTS11_163_CHANCE.pdf?1669865530
 Short version of our analysis of biology students
 https://iase-web.org/icots/11/proceedings/pdfs/ICOTS11_251_TINTLE.pdf?1669865543
 
-Old versin of high school paper
+Old version of high school paper
 https://osf.io/xyc63/download/?format=pdf
+
+Worthwhile Stat 365-type workshop [view](https://www.storytellingwithdata.com/exploreexplain)
+

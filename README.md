@@ -18,3 +18,4 @@ https://osf.io/xyc63/download/?format=pdf
 
 Worthwhile Stat 365-type workshop [view](https://www.storytellingwithdata.com/exploreexplain)
 
+Super brief follow up to Mauer https://www.causeweb.org/sbi/?p=1473 

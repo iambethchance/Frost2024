@@ -41,15 +41,15 @@ preAndPost <- allYrsFinal |>
 # Remove low time spent on assessments (for those who took both pre and post)
 ```{r}
 preAndPost |>
-  filter(test.time.pre > 5 & test.time.post > 5)
+  filter(test.time.pre > 10 & test.time.post > 10)
 
-# 11787 obs (lose 3 obs)
+# 11697 obs (lose 103 obs)
 ```
 
 # Remove low time spent on assessments (overall)
 ```{r}
 allYrsFinal |>
-  filter(test.time.pre > 5 | test.time.post > 5)
+  filter(test.time.pre > 10 | test.time.post > 10)
 
-# 14781 obs (lose 11 obs)
+# 14,765 obs (lose 11 obs)
 ```

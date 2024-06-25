@@ -11,7 +11,7 @@ library(readr)
 
 # data
 allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
-head(allYrsFinal)
+postOptSubset <- read_csv("FinalFiles2023/Data/Post Optional Subsetting.csv")
 ```
 
 # Only Pre-test

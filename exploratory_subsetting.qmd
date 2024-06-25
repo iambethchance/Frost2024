@@ -45,3 +45,11 @@ preAndPost |>
 
 # 11787 obs (lose 3 obs)
 ```
+
+# Remove low time spent on assessments (overall)
+```{r}
+allYrsFinal |>
+  filter(test.time.pre > 5 | test.time.post > 5)
+
+# 14781 obs (lose 11 obs)
+```

@@ -21,3 +21,6 @@ https://osf.io/xyc63/download/?format=pdf
 Worthwhile Stat 365-type workshop [view](https://www.storytellingwithdata.com/exploreexplain)
 
 Super brief follow up to Mauer https://www.causeweb.org/sbi/?p=1473 
+
+6/27: Possible treasure hunt: Find an article (probably by Ziffler, also by Garfield, maybe even Sabbag) that shows one of their diagrams of the simulation process.  We could give 2-3 to Stat 217/218 students this summer and see which the prefer.  See also ![image](https://github.com/iambethchance/Frost2024/assets/75873576/0b36d0c6-a3ee-4f85-b309-3d0cef65497a)
+

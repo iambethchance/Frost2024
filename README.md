@@ -9,4 +9,9 @@ Reading list https://docs.google.com/document/d/1mWrs2Wdc_dq46Hl2QxCmtp0AwKkGVRC
 Dennis sun was just advocating to me, the text by Freedman, Pisani, and Purves may have an explanation, or perhaps an article by Andrew Gelman??
 So I forgot to mention this when we talked today, but it's another way to help visualize that randomization process, do your observation go in this column or in this column?  Rather than does your row read group1 vs. group2? So might be another representation to consider...
 
+More from DISCUSS project (students reflecting on SBI Experience)
+[Kayla Inst Pract Memo.docx](https://github.com/user-attachments/files/16036853/Kayla.Inst.Pract.Memo.docx)
+[Memo Meagan and Lauren Instructional practices.docx](https://github.com/user-attachments/files/16036852/Memo.Meagan.and.Lauren.Instructional.practices.docx)
+[Hannah A InstPract Memo.docx](https://github.com/user-attachments/files/16036851/Hannah.A.InstPract.Memo.docx)
+[Jdyn_Stu_Inst_Prac_Interview_Memo.docx](https://github.com/user-attachments/files/16036850/Jdyn_Stu_Inst_Prac_Interview_Memo.docx)
 

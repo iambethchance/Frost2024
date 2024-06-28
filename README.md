@@ -7,5 +7,6 @@ Reading list https://docs.google.com/document/d/1mWrs2Wdc_dq46Hl2QxCmtp0AwKkGVRC
 6/27: Maybe also consider "potential outcomes" tables?? 
 ![image](https://github.com/iambethchance/Frost2024/assets/75873576/42ac6bf9-0f3b-46cb-9935-87f3d1d6221f)
 Dennis sun was just advocating to me, the text by Freedman, Pisani, and Purves may have an explanation, or perhaps an article by Andrew Gelman??
+So I forgot to mention this when we talked today, but it's another way to help visualize that randomization process, do your observation go in this column or in this column?  Rather than does your row read group1 vs. group2? So might be another representation to consider...
 
 

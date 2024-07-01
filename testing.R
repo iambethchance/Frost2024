@@ -24,15 +24,22 @@ ui <- page_sidebar(
 #                  label = "Include ISCAM?",
 #                  choices = c("Yes", "No"),
 #                  selected = "Yes"),
-#   # replace with type of textbook? (select all that apply)
-#     checkboxGroupInput("textbooks",
-#                        label = "Textbooks:",
-#                        choices = c("Textbook 1",
-#                                    "Textbook 2",
-#                                    "Textbook 3"),
-#                        selected = c("Textbook 1",
-#                                     "Textbook 2",
-#                                     "Textbook 3")),
+  # replace with type of textbook? (select all that apply)
+    checkboxGroupInput("textbooks",
+                       label = HTML('<a href="link" target="_blank">Textbooks:</a>'),
+                       choices = c("ISI",
+                                   "ISI1st",
+                                   "OtherSBI",
+                                   "NotSBI",
+                                   "NotSBI2",
+                                   "ISCAM",
+                                   "Other"),
+                       selected = c("ISI",
+                                    "ISI1st",
+                                    "OtherSBI",
+                                    "NotSBI",
+                                    "NotSBI2",
+                                    "Other")),
 # remove calculus math pre-req: multiple choice (yes remove, no don't remove)
     radioButtons("calc_prereq",
                  label = "Include courses with a calc pre-req?",
@@ -53,7 +60,7 @@ ui <- page_sidebar(
 # class size: slider with adjustible min and max
     sliderInput("class_size",
             label = "Class size:",
-            min = 0, max = 100, value = c(10, 100),
+            min = 0, max = 450, value = c(10, 450),
             ticks = FALSE),
 # # remove low section response rate?
 #     sliderInput("section_rr",
@@ -83,8 +90,7 @@ ui <- page_sidebar(
   mainPanel(
     textOutput("response_rate"),
     textOutput("achievable_gain"),
-    # textOutput("iscam"),
-    # textOutput("textbooks"),
+    textOutput("textbooks"),
     textOutput("calc_prereq"),
     textOutput("school_type"),
     textOutput("class_size"),
@@ -105,35 +111,55 @@ server <- function(input, output) {
   output$achievable_gain <- renderText({
     paste("Achievable gain:", input$achievable_gain[1], "to", input$achievable_gain[2])
   })
-  
-  # output$iscam <- renderText({
-  #   paste("Include ISCAM:", input$iscam)
-  # })
-  # 
-  # output$textbooks <- renderText({
-  #   out <- "Textbooks:"
-  #   prev <- FALSE
-  #   if (!is.na(input$textbooks[1])) {
-  #     out <- paste(out, input$textbooks[1])
-  #     prev <- TRUE
-  #   }
-  #   if (!is.na(input$textbooks[2])) {
-  #     if (prev) {
-  #       out <- paste(out, input$textbooks[2], sep = ", ")
-  #     } else {
-  #       out <- paste(out, input$textbooks[2])
-  #       prev <- TRUE
-  #     }
-  #   }
-  #   if (!is.na(input$textbooks[3])) {
-  #     if (prev) {
-  #       out <- paste(out, input$textbooks[3], sep = ", ")
-  #     } else {
-  #       out <- paste(out, input$textbooks[3])
-  #     }
-  #   }
-  #   out
-  # })
+
+  output$textbooks <- renderText({
+    out <- "Textbooks:"
+    prev <- FALSE
+    if (!is.na(input$textbooks[1])) {
+      out <- paste(out, input$textbooks[1])
+      prev <- TRUE
+    }
+    if (!is.na(input$textbooks[2])) {
+      if (prev) {
+        out <- paste(out, input$textbooks[2], sep = ", ")
+      } else {
+        out <- paste(out, input$textbooks[2])
+        prev <- TRUE
+      }
+    }
+    if (!is.na(input$textbooks[3])) {
+      if (prev) {
+        out <- paste(out, input$textbooks[3], sep = ", ")
+      } else {
+        out <- paste(out, input$textbooks[3])
+        prev <- TRUE
+      }
+    }
+    if (!is.na(input$textbooks[4])) {
+      if (prev) {
+        out <- paste(out, input$textbooks[4], sep = ", ")
+      } else {
+        out <- paste(out, input$textbooks[4])
+        prev <- TRUE
+      }
+    }
+    if (!is.na(input$textbooks[5])) {
+      if (prev) {
+        out <- paste(out, input$textbooks[5], sep = ", ")
+      } else {
+        out <- paste(out, input$textbooks[5])
+        prev <- TRUE
+      }
+    }
+    if (!is.na(input$textbooks[6])) {
+      if (prev) {
+        out <- paste(out, input$textbooks[6], sep = ", ")
+      } else {
+        out <- paste(out, input$textbooks[6])
+      }
+    }
+    out
+  })
   
   output$calc_prereq <- renderText({
     paste("Include courses with a calculus pre-req:", input$calc_prereq)
@@ -185,10 +211,6 @@ server <- function(input, output) {
     paste("Class size:", input$class_size[1], "to", input$class_size[2], "students")
   })
   
-  # output$section_rr <- renderText({
-  #   paste("Section response rate:", input$section_rr[1], "to", input$section_rr[2])
-  # })
-  
   output$imputation <- renderText({
     paste("Imputate missing values:", input$imputation)
   })
@@ -217,6 +239,7 @@ server <- function(input, output) {
                 input$pre_post_tests == "Students who took both the pre- and post-tests" ~ (is.na(opt.out.pre) == FALSE & is.na(opt.out.post) == FALSE)
                 ),
              if (input$calc_prereq == "No") (math.prereq != "Calculus" | is.na(math.prereq) == T) else TRUE,
+             textbook.classification %in% input$textbooks,
              carnegie.classification %in% input$school_type,
              class.size.end >= input$class_size[1], class.size.end <= input$class_size[2]
             ) |>

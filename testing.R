@@ -16,7 +16,7 @@ ui <- page_sidebar(
                 ticks = FALSE),
 # achievable gain: slider with adjustable min and max
     sliderInput("achievable_gain",
-                label = "Acheivable gain:",
+                label = HTML('<a href="AchievableGain.html" target="_blank">Achievable gain:</a>'),
                 min = -5, max = 5, value = c(-1, 1),
                 ticks = FALSE),
 # # include iscam: multiple choice (yes remove, no don't remove)
@@ -26,7 +26,7 @@ ui <- page_sidebar(
 #                  selected = "Yes"),
   # replace with type of textbook? (select all that apply)
     checkboxGroupInput("textbooks",
-                       label = HTML('<a href="https://raw.githubusercontent.com/iambethchance/Frost2024/libby/Textbooks.html" target="_blank">Textbooks:</a>'),
+                       label = HTML('<a href="Textbooks.html" target="_blank">Textbooks:</a>'),
                        choices = c("ISI",
                                    "ISI1st",
                                    "OtherSBI",
@@ -81,7 +81,7 @@ ui <- page_sidebar(
                  selected = "Yes"),
 # type of answers: drop-down (correct/incorrect, actual responses, both)
     selectInput("answer_type",
-                label = "How would you like student responses formatted?",
+                label = "Which student answers do you want?",
                 choices = c("Correct vs. incorrect",
                             "Actual responses",
                             "Both correct vs. incorrect and actual responses"),

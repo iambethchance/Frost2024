@@ -26,7 +26,7 @@ ui <- page_sidebar(
 #                  selected = "Yes"),
   # replace with type of textbook? (select all that apply)
     checkboxGroupInput("textbooks",
-                       label = HTML('<a href="link" target="_blank">Textbooks:</a>'),
+                       label = HTML('<a href="https://raw.githubusercontent.com/iambethchance/Frost2024/libby/Textbooks.html" target="_blank">Textbooks:</a>'),
                        choices = c("ISI",
                                    "ISI1st",
                                    "OtherSBI",

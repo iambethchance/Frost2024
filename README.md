@@ -32,3 +32,5 @@ Do you want to track down the one in JSDSE as well?
 Make sure the special SERJ issue didn't already have a big comparison of male/female on cognitive competence (but still wouldn't look at interaction with SBI)?
 
 Tell me more what was different about the assessment questions that Case used and whether we want to try to get our hands on them?
+
+Recording for Robin Lock's session is now up: https://www.causeweb.org/cause/ecots/ecots24/closing-session-awards

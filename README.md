@@ -16,3 +16,5 @@ More from DISCUSS project (students reflecting on SBI Experience)
 [Jdyn_Stu_Inst_Prac_Interview_Memo.docx](https://github.com/user-attachments/files/16036850/Jdyn_Stu_Inst_Prac_Interview_Memo.docx)
 
 I used to have a "[do it yourself glossary](https://www.oreilly.com/library/view/workshop-statistics-discovery/9780470542040/48-appendix-a.html url)". Could we "modernize" that and would it be more helpful than our online glossary
+
+Should we look into "stankey diagrams" for comparing pre/post or questions within the same question set?

@@ -18,3 +18,16 @@ More from DISCUSS project (students reflecting on SBI Experience)
 I used to have a "[do it yourself glossary](https://www.oreilly.com/library/view/workshop-statistics-discovery/9780470542040/48-appendix-a.html url)". Could we "modernize" that and would it be more helpful than our online glossary
 
 Should we look into "stankey diagrams" for comparing pre/post or questions within the same question set?
+
+SBI in Large classes
+https://www.causeweb.org/sbi/?cat=43
+
+When you get a chance, can you put your slides from today here or in slack?
+
+Our "teaching inventory"
+[Teaching Inventory.pdf](https://github.com/user-attachments/files/16075152/Teaching.Inventory.pdf)
+Do you want to track down the one in JSDSE as well?
+
+Make sure the special SERJ issue didn't already have a big comparison of male/female on cognitive competence (but still wouldn't look at interaction with SBI)?
+
+Tell me more what was different about the assessment questions that Case used and whether we want to try to get our hands on them?

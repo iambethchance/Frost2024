@@ -24,7 +24,9 @@ SBI in Large classes
 https://www.causeweb.org/sbi/?cat=43
 
 When you get a chance, can you put your slides from today here or in slack?
+
   Libby: https://docs.google.com/presentation/d/1LbVZlO29UWeJoLjam4GZrkaViIGRbonWyt-OYRxAupA/edit?usp=sharing
+
 
 Our "teaching inventory"
 [Teaching Inventory.pdf](https://github.com/user-attachments/files/16075152/Teaching.Inventory.pdf)

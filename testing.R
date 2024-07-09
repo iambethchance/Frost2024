@@ -86,7 +86,7 @@ ui <- fluidPage(
       textOutput("imputation"),
       textOutput("answer_type"),
       textOutput("pre_post_tests"),
-      textOutput("overall_category"),
+      uiOutput("overall_category"),
       textOutput("dt_heading"),
       tableOutput("data_table")
     )
@@ -128,7 +128,7 @@ server <- function(input, output) {
   
   # TODO: take care of issue when choose < 1 or > 1 categories
 
-  output$overall_category <- renderText({
+  output$overall_category <- renderUI({
     if (length(input$overall_category) == 0) {
       paste("Overall categories: None selected")
     }
@@ -141,7 +141,7 @@ server <- function(input, output) {
       attitudes_sub_text <- paste( 
                                   "Attitudes Subcategories: ", 
                                   if (length(input$attitudes_sub) > 0) {
-                                    paste(input$attitudes_sub, collapse = ", ", "\n")
+                                    paste(input$attitudes_sub, collapse = ", ")
                                   } else {
                                     "None selected"
                                   }, sep = "\n")
@@ -149,15 +149,18 @@ server <- function(input, output) {
     
     if ("Concepts" %in% input$overall_category) {
       concepts_sub_text <- paste(
-                                  "Concepts Subcategories: ", 
+                                  "\nConcepts Subcategories: ", 
                                   if (length(input$concepts_sub) > 0) {
-                                    paste(input$concepts_sub, collapse = ", ", "\n")
+                                    paste(input$concepts_sub, collapse = ", ")
                                   } else {
                                     "None selected"
-                                  }, sep = "\n")
+                                  }, sep = "")
     }
     
-    paste(overall_category_text, attitudes_sub_text, concepts_sub_text,sep = "\n")
+    HTML(paste(overall_category_text), "<br>", 
+         paste(attitudes_sub_text), "<br>",
+         paste(concepts_sub_text))
+    
   })
   
   

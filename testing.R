@@ -10,6 +10,15 @@ ui <- fluidPage(
     sidebarPanel(
       helpText("Answer the following questions to filter the data as needed"),
 
+# year
+    checkboxGroupInput("year",
+                label = "Years:",
+                choices = c("2014-15 school year",
+                            "2015-16 school year",
+                            "2016-17 school year"),
+                selected = c("2014-15 school year",
+                             "2015-16 school year",
+                             "2016-17 school year")),
 # response rate: slider with adjustable min
     sliderInput("response_rate",
                 label = HTML('<a href="ResponseRate.html" target="_blank">Response rate:</a>'),
@@ -74,7 +83,7 @@ ui <- fluidPage(
     radioButtons("imputation",
                  label = "Imputate missing values?",
                  choices = c("Yes", "No"),
-                 selected = "Yes"),
+                 selected = "No"),
 # type of answers: drop-down (correct/incorrect, actual responses, both)
     selectInput("answer_type",
                 label = "Which student answers do you want?",
@@ -85,6 +94,7 @@ ui <- fluidPage(
     # downloadButton("downloadData", "Download")
   ),
   mainPanel(
+    textOutput("year"),
     textOutput("response_rate"),
     textOutput("achievable_gain"),
     textOutput("textbooks"),
@@ -102,6 +112,31 @@ ui <- fluidPage(
 ))
 
 server <- function(input, output, session) {
+  output$year <- renderText({
+    out <- "Year(s):"
+    prev <- FALSE
+    if (!is.na(input$year[1])) {
+      out <- paste(out, input$year[1])
+      prev <- TRUE
+    }
+    if (!is.na(input$year[2])) {
+      if (prev) {
+        out <- paste(out, input$year[2], sep = ", ")
+      } else {
+        out <- paste(out, input$year[2])
+        prev <- TRUE
+      }
+    }
+    if (!is.na(input$year[3])) {
+      if (prev) {
+        out <- paste(out, input$year[3], sep = ", ")
+      } else {
+        out <- paste(out, input$year[3])
+      }
+    }
+    out
+  })
+  
   output$response_rate <- renderText({
     paste("Response rate:", input$response_rate[1], "to", input$response_rate[2])
   })
@@ -282,21 +317,26 @@ server <- function(input, output, session) {
       data_amelia$prev.stat.course <- as.numeric(data_amelia$prev.stat.course)
       data_amelia$status <- as.numeric(data_amelia$status)
       data_amelia$math.satact.flag <- as.numeric(data_amelia$math.satact.flag)
-
+      
+    # added by Libby Brill, 7/10/24
+      # data_amelia$q16a.pre.c.1415 <- as.numeric(data_amelia$q16a.pre.c.1415 == "valid")
+      # data_amelia$q16b.pre.c.1415 <- as.numeric(data_amelia$q16b.pre.c.1415 == "valid**")
+      # data_amelia$q16c.pre.c.1415 <- as.numeric(data_amelia$q16c.pre.c.1415 == "valid")
+      # 
+      # data_amelia$q16a.pre.c <- as.numeric(data_amelia$q16a.pre.c == "checked**")
+      # data_amelia$q16b.pre.c <- as.numeric(data_amelia$q16b.pre.c == "checked")
+      # data_amelia$q16c.pre.c <- as.numeric(data_amelia$q16c.pre.c == "checked")
+      # data_amelia$q16d.pre.c <- as.numeric(data_amelia$q16d.pre.c == "checked**")
+      
+      
       ord_vars <- names(data_amelia[c(162:175)])
     #   ord_vars <- names(data_amelia[c(225:238)])
-      # [225] "math.perf.post"                    "math.comp.pre"                   
-      # [227] "math.comp.post"                    "stats.career.usage.pre"          
-      # [229] "stats.career.usage.post"           "mastering.confidence.pre"        
-      # [231] "mastering.confidence.post"         "choice.likelihood.pre"           
-      # [233] "choice.likelihood.post"            "why.take.pre"                    
-      # [235] "why.take.post"                     "is.major.course"                 
-      # [237] "field.major"                       "gpa"
       
       gpa_bound <- matrix(c(176, 1.0, 4.0), nrow = 1, ncol = 3)
     #   gpa_bound <- matrix(c(239, 1.0, 4.0), nrow = 1, ncol = 3)
 
-      myidvars <- names(data_amelia[-c(162:183, 260:269, 236:237)])
+      myidvars <- names(data_amelia[c(1:161, 184:203, 205:235, 237:257, 270:297)]) # remove 236?
+            # myidvars <- names(data_amelia[c(1:161, 184:259, 270:235, 238:297)]) # -c(162:183, 260:269, 236:237)
     #   myidvars <- names(data_amelia[c(1:224, 247:266, 268:318, 331:334, 337:387)])
 
       data_imputed <- amelia(data_amelia, m=1,
@@ -440,6 +480,13 @@ server <- function(input, output, session) {
 
       filteredData <- data_imputed
     }
+    
+    filteredData <- filteredData |>
+      mutate(school.year = case_when(endsWith(instructor.section, "14-15") ~ "2014-15 school year",
+                                     endsWith(instructor.section, "15-16") ~ "2015-16 school year",
+                                     endsWith(instructor.section, "16-17") ~ "2016-17 school year")) |>
+      filter(school.year %in% input$year) |>
+      select(-school.year)
     
     filteredData <- filteredData |>
       filter(c.rr.pre >= input$response_rate[1], c.rr.pre <= input$response_rate[2],

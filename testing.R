@@ -45,12 +45,12 @@ ui <- fluidPage(
                    label = "Imputate missing values?",
                    choices = c("Yes", "No"),
                    selected = "Yes"),
-      selectInput("answer_type",
-                  label = "How would you like student responses formatted?",
-                  choices = c("Correct vs. incorrect",
-                              "Actual responses",
-                              "Both correct vs. incorrect and actual responses"),
-                  selected = "Both correct vs. incorrect and actual responses"),
+      # selectInput("answer_type",
+      #             label = "How would you like student responses formatted?",
+      #             choices = c("Correct vs. incorrect",
+      #                         "Actual responses",
+      #                         "Both correct vs. incorrect and actual responses"),
+      #          selected = "Both correct vs. incorrect and actual responses"),
       checkboxGroupInput("overall_category",
                          label = "Choose overall question categories of interest:",
                          choices = c("Attitudes",
@@ -61,11 +61,11 @@ ui <- fluidPage(
         checkboxGroupInput("attitudes_sub", 
                            label = "Attitudes Subcategories: ",
                            choices = c("Affect",
-                                        "Cognitive Competence",
-                                        "Difficulty",
-                                        "Effort",
-                                        "Interest",
-                                        "Value"))),
+                                       "Cognitive Competence",
+                                       "Difficulty",
+                                       "Effort",
+                                       "Interest",
+                                       "Value"))),
       conditionalPanel(
         condition = "input.overall_category.indexOf('Concepts') > -1",
         checkboxGroupInput("concepts_sub",
@@ -75,7 +75,13 @@ ui <- fluidPage(
                                        "Confidence Intervals",
                                        "Scope of Conclusions",
                                        "Significance",
-                                       "Simulation")))
+                                       "Simulation"))),
+      selectInput("right_wrong",
+                  label = "How would you like student responses formatted?: ",
+                  choices = c("Correct vs. Incorrect",
+                              "Original answers")
+        
+      )
     ),
     mainPanel(
       textOutput("response_rate"),
@@ -87,6 +93,7 @@ ui <- fluidPage(
       textOutput("answer_type"),
       textOutput("pre_post_tests"),
       uiOutput("overall_category"),
+      textOutput("right_wrong"),
       textOutput("dt_heading"),
       tableOutput("data_table")
     )
@@ -118,16 +125,15 @@ server <- function(input, output) {
     paste("Imputate missing values:", input$imputation)
   })
   
-  output$answer_type <- renderText({
-    paste("Answer type:", input$answer_type)
-  })
+  # output$answer_type <- renderText({
+  #   paste("Answer type:", input$answer_type)
+  # })
   
   output$pre_post_tests <- renderText({
     paste("Pre-test vs. post-test responses:", input$pre_post_tests)
   })
   
-  # TODO: take care of issue when choose < 1 or > 1 categories
-
+  
   output$overall_category <- renderUI({
     if (length(input$overall_category) == 0) {
       paste("Overall categories: None selected")
@@ -139,29 +145,32 @@ server <- function(input, output) {
     
     if ("Attitudes" %in% input$overall_category) {
       attitudes_sub_text <- paste( 
-                                  "Attitudes Subcategories: ", 
-                                  if (length(input$attitudes_sub) > 0) {
-                                    paste(input$attitudes_sub, collapse = ", ")
-                                  } else {
-                                    "None selected"
-                                  }, sep = "\n")
+        "Attitudes Subcategories: ", 
+        if (length(input$attitudes_sub) > 0) {
+          paste(input$attitudes_sub, collapse = ", ")
+        } else {
+          "None selected"
+        }, sep = "\n")
     }
     
     if ("Concepts" %in% input$overall_category) {
       concepts_sub_text <- paste(
-                                  "\nConcepts Subcategories: ", 
-                                  if (length(input$concepts_sub) > 0) {
-                                    paste(input$concepts_sub, collapse = ", ")
-                                  } else {
-                                    "None selected"
-                                  }, sep = "")
+        "\nConcepts Subcategories: ", 
+        if (length(input$concepts_sub) > 0) {
+          paste(input$concepts_sub, collapse = ", ")
+        } else {
+          "None selected"
+        }, sep = "")
     }
     
     HTML(paste(overall_category_text), "<br>", 
          paste(attitudes_sub_text), "<br>",
          paste(concepts_sub_text))
     
-  })
+    })
+    output$right_wrong <- renderText({
+      paste("Incorrect or correct: ", input$right_wrong)
+    })
   
   
   output$dt_heading <- renderText({
@@ -172,18 +181,20 @@ server <- function(input, output) {
   allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
   
   output$data_table <- renderTable({
-    allYrsFinal |>
+    filteredData <- allYrsFinal |>
       filter(c.rr.pre >= input$response_rate[1], c.rr.pre <= input$response_rate[2],
              c.rr.post >= input$response_rate[1], c.rr.post <= input$response_rate[2],
              ach.gain.24 > input$achievable_gain[1], ach.gain.24 < input$achievable_gain[2],
              case_when(
                input$pre_post_tests == "Students who took the pre-test" ~ !is.na(opt.out.pre),
                input$pre_post_tests == "Students who took the post-test" ~ !is.na(opt.out.post),
-               input$pre_post_tests == "Students who took both the pre- and post-tests" ~ !is.na(opt.out.pre) & !is.na(opt.out.post)
+               input$pre_post_tests == "Students who took both the pre- and post-tests" ~ !is.na(opt.out.pre) & !is.na(opt.out.post),
              ),
              if (input$calc_prereq == "No") (math.prereq != "Calculus" | is.na(math.prereq)) else TRUE,
              carnegie.classification %in% input$school_type,
-             class.size.end >= input$class_size[1], class.size.end <= input$class_size[2])
+             class.size.end >= input$class_size[1], class.size.end <= input$class_size[2]) 
+    
+    
     
     selected_columns <- c()
     
@@ -279,10 +290,14 @@ server <- function(input, output) {
       }
       
       if(subcatgories_selected == FALSE) { 
-      selected_columns <- c(selected_columns, grep("^q1[6-9]", colnames(allYrsFinal), value = TRUE), 
-                            grep("^q2[0-9]", colnames(allYrsFinal), value = TRUE), 
-                            grep("^q3[0-9]", colnames(allYrsFinal), value = TRUE), 
-                            grep("^q4[0-7]", colnames(allYrsFinal), value = TRUE))
+        selected_columns <- c(selected_columns, grep("^q1[6-9]", colnames(allYrsFinal), value = TRUE), 
+                              grep("^q2[0-9]", colnames(allYrsFinal), value = TRUE), 
+                              grep("^q3[0-9]", colnames(allYrsFinal), value = TRUE), 
+                              grep("^q4[0-7]", colnames(allYrsFinal), value = TRUE))
+      }
+      if (input$right_wrong == "Correct vs. Incorrect") {
+        filteredData <- filteredData %>%
+          mutate(across(starts_with("q"), ~ ifelse(grepl("\\*\\*$", .), "correct", "incorrect")))
       }
     }
     
@@ -294,12 +309,15 @@ server <- function(input, output) {
     non_question_columns <- colnames(allYrsFinal)[!grepl("^q", colnames(allYrsFinal))]
     selected_columns <- c(non_question_columns, selected_columns)
     
+    
+    filteredData <- filteredData |> select(all_of(selected_columns))
+    
+    
 
-    allYrsFinal <- allYrsFinal |> select(all_of(selected_columns))
-    
-    
-    head(allYrsFinal)
+    head(filteredData)
   })
 }
 
 shinyApp(ui = ui, server = server)
+
+

@@ -24,8 +24,9 @@ allYrsFinal|>
   ggplot(aes(x=gender, y=cognitive.competence.pre)) + 
   geom_boxplot()
 ```
-```{r}
 
+```{r}
+t.test(allYrsFinal$cognitive.competence.pre ~ allYrsFinal$gender)
 ```
 
 ```{r}
@@ -35,6 +36,9 @@ allYrsFinal|>
   geom_boxplot()
 ```
 
+```{r}
+t.test(allYrsFinal$cognitive.competence.post ~ allYrsFinal$gender)
+```
 
 ```{r}
 allYrsFinal|>
@@ -42,6 +46,14 @@ allYrsFinal|>
   ggplot(aes(x=gender, y=cognitive.competence.change)) + 
   geom_boxplot()
 ```
+
+```{r}
+t.test(allYrsFinal$cognitive.competence.change ~ allYrsFinal$gender)
+```
+
+
+
+
 ```{r}
 # Define the patterns to search for
 competence <- c("^q6e", "^q7a", "^q8f", "^q9a", "^q9b", "^q9e")
@@ -89,5 +101,3 @@ for (pattern in competence) {
 wilcox_results
 
 ```
-
-

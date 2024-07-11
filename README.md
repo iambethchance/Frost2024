@@ -43,3 +43,6 @@ Make sure the special SERJ issue didn't already have a big comparison of male/fe
 Tell me more what was different about the assessment questions that Case used and whether we want to try to get our hands on them?
 
 Recording for Robin Lock's session is now up: https://www.causeweb.org/cause/ecots/ecots24/closing-session-awards
+
+Gender + Cognitive Competence Google Folder:
+https://drive.google.com/drive/folders/1KnI05jOsfaPW2kzd7PNmX1uXGxfzdbZf?usp=sharing

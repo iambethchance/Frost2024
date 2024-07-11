@@ -43,3 +43,18 @@ Make sure the special SERJ issue didn't already have a big comparison of male/fe
 Tell me more what was different about the assessment questions that Case used and whether we want to try to get our hands on them?
 
 Recording for Robin Lock's session is now up: https://www.causeweb.org/cause/ecots/ecots24/closing-session-awards
+
+-----
+
+Gender + Cognitive Competence Google Folder:
+https://drive.google.com/drive/folders/1KnI05jOsfaPW2kzd7PNmX1uXGxfzdbZf?usp=sharing
+
+Papers we're trying to get access to:
+
+- https://www.researchgate.net/publication/228793942_Survey_of_Attitudes_Toward_Statistics_Factor_Structure_Invariance_by_Gender_and_by_Administration_Time
+
+- https://www.researchgate.net/publication/227731362_Gender_differences_in_science_attitude-achievement_relationships_over_time_among_White_middle-class_students
+
+- https://www.researchgate.net/publication/243492237_Conceptual_astronomy_II_Replicating_conceptual_gains_probing_attitude_changes_across_three_semesters
+
+- https://www.researchgate.net/publication/232520538_Impact_of_Gender_Characteristics_of_Instructional_Materials_An_Integration_of_the_Research_Literature

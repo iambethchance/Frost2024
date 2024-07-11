@@ -19,6 +19,13 @@ ui <- fluidPage(
                 selected = c("2014-15 school year",
                              "2015-16 school year",
                              "2016-17 school year")),
+# pre-test vs. post-test vs. both
+    selectInput("pre_post_tests",
+            label = "Pre-test vs. post-test responses:",
+            choices = c("Students who took the pre-test",
+                        "Students who took the post-test",
+                        "Students who took both the pre- and post-tests"),
+            selected = "Students who took both the pre- and post-tests"),
 # response rate: slider with adjustable min
     sliderInput("response_rate",
                 label = HTML('<a href="ResponseRate.html" target="_blank">Response rate:</a>'),
@@ -72,16 +79,9 @@ ui <- fluidPage(
 #             label = "Section response rate:",
 #             min = 0, max = 1, value = c(0.25, 1),
 #             ticks = FALSE),
-# pre-test vs. post-test vs. both
-    selectInput("pre_post_tests",
-            label = "Pre-test vs. post-test responses:",
-            choices = c("Students who took the pre-test",
-                        "Students who took the post-test",
-                        "Students who took both the pre- and post-tests"),
-            selected = "Students who took both the pre- and post-tests"),
-# imputation: multiple choice (yes imputate missing values, no don't imputate missing values)
+# imputation: multiple choice (yes impute missing values, no don't impute missing values)
     radioButtons("imputation",
-                 label = "Imputate missing values?",
+                 label = "Impute missing values?",
                  choices = c("Yes", "No"),
                  selected = "No"),
 # type of answers: drop-down (correct/incorrect, actual responses, both)
@@ -95,6 +95,7 @@ ui <- fluidPage(
   ),
   mainPanel(
     textOutput("year"),
+    textOutput("pre_post_tests"),
     textOutput("response_rate"),
     textOutput("achievable_gain"),
     textOutput("textbooks"),
@@ -103,8 +104,7 @@ ui <- fluidPage(
     textOutput("class_size"),
     # textOutput("section_rr"),
     textOutput("imputation"),
-    textOutput("answer_type"),
-    uiOutput("pre_post_tests"),
+    uiOutput("answer_type"),
     downloadButton("downloadData", "Download"),
     uiOutput("dt_heading"),
     tableOutput("data_table")
@@ -135,6 +135,10 @@ server <- function(input, output, session) {
       }
     }
     out
+  })
+  
+  output$pre_post_tests <- renderText({
+    paste("Pre-test vs. post-test responses:", input$pre_post_tests)
   })
   
   output$response_rate <- renderText({
@@ -245,15 +249,11 @@ server <- function(input, output, session) {
   })
   
   output$imputation <- renderText({
-    paste("Imputate missing values:", input$imputation)
+    paste("Impute missing values:", input$imputation)
   })
   
-  output$answer_type <- renderText({
-    paste("Answer type:", input$answer_type)
-  })
-  
-  output$pre_post_tests <- renderUI({
-    HTML(paste("Pre-test vs. post-test responses:", input$pre_post_tests), "<br><br>")
+  output$answer_type <- renderUI({
+    HTML(paste("Answer type:", input$answer_type), "<br><br>")
   })
   
   allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
@@ -480,17 +480,23 @@ server <- function(input, output, session) {
 
       filteredData <- data_imputed
     }
-    
+  
+      
     filteredData <- filteredData |>
       mutate(school.year = case_when(endsWith(instructor.section, "14-15") ~ "2014-15 school year",
                                      endsWith(instructor.section, "15-16") ~ "2015-16 school year",
                                      endsWith(instructor.section, "16-17") ~ "2016-17 school year")) |>
       filter(school.year %in% input$year) |>
-      select(-school.year)
-    
-    filteredData <- filteredData |>
-      filter(c.rr.pre >= input$response_rate[1], c.rr.pre <= input$response_rate[2],
-             c.rr.post >= input$response_rate[1], c.rr.post <= input$response_rate[2],
+      select(-school.year) |>
+      filter(case_when(input$pre_post_tests == "Students who took the pre-test"
+                          ~ (c.rr.pre >= input$response_rate[1] & c.rr.pre <= input$response_rate[2]),
+                       input$pre_post_tests == "Students who took the post-test"
+                          ~ (c.rr.post >= input$response_rate[1] & c.rr.post <= input$response_rate[2]),
+                       input$pre_post_tests == "Students who took both the pre- and post-tests"
+                          ~ (c.rr.pre >= input$response_rate[1] & c.rr.pre <= input$response_rate[2] & c.rr.post >= input$response_rate[1] & c.rr.post <= input$response_rate[2]
+                       )),
+             # c.rr.pre >= input$response_rate[1], c.rr.pre <= input$response_rate[2],
+             # c.rr.post >= input$response_rate[1], c.rr.post <= input$response_rate[2],
              ach.gain.24 > input$achievable_gain[1], ach.gain.24 < input$achievable_gain[2],
              case_when(
                input$pre_post_tests == "Students who took the pre-test" ~ (is.na(opt.out.pre) == FALSE),

@@ -1,0 +1,154 @@
+---
+title: "Exploratory analysis: gender and cognitive competence"
+format: html
+editor: visual
+---
+
+```{r}
+# packages
+library(dplyr)
+library(readr)
+```
+
+```{r}
+# data
+allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
+```
+
+Gender and Pre boxplot
+
+```{r}
+#cognitive.competence.pre	cognitive.competence.post
+#cognitive.competence.change	
+# gender
+allYrsFinal|>
+  #filter(!is.na(gender), !is.na(cognitive.competence.pre)) |>
+  ggplot(aes(x=gender, y=cognitive.competence.pre)) + 
+  geom_boxplot()
+```
+
+Gender and Pre t-test
+
+```{r}
+t.test(allYrsFinal$cognitive.competence.pre ~ allYrsFinal$gender)
+```
+
+Gender and Post boxplot
+
+```{r}
+allYrsFinal|>
+  #filter(!is.na(gender), !is.na(cognitive.competence.post)) |>
+  ggplot(aes(x=gender, y=cognitive.competence.post)) + 
+  geom_boxplot()
+```
+
+Gender and Post t-test
+
+```{r}
+t.test(allYrsFinal$cognitive.competence.post ~ allYrsFinal$gender)
+```
+
+Gender and Change boxplot
+
+```{r}
+allYrsFinal|>
+  #filter(!is.na(gender), !is.na(cognitive.competence.change)) |>
+  ggplot(aes(x=gender, y=cognitive.competence.change)) + 
+  geom_boxplot()
+```
+
+```{r}
+t.test(allYrsFinal$cognitive.competence.change ~ allYrsFinal$gender)
+```
+
+Post:
+
+-   6e: I had trouble understanding statistics because of how I think.
+
+-   7a: I had no idea of what was going on in this statistics course.
+
+-   8f: I made a lot of math errors in statistics.
+
+-   9a: I learned statistics.
+
+-   9b: I understood statistics equations.
+
+-   9e: I found it difficult to understand statistical concepts.
+
+```{r}
+# Define the patterns to search for
+competence <- c("^q6e", "^q7a", "^q8f", "^q9a", "^q9b", "^q9e")
+
+# Initialize an empty list to store the t-test results
+t_test_results <- list()
+
+# Loop through each pattern
+for (pattern in competence) {
+  # Find the column names that match the pattern
+  matched_columns <- grep(pattern, colnames(allYrsFinal), value = TRUE)
+  
+  # Loop through each matched column and perform a t-test
+  for (column in matched_columns) {
+    # Perform the t-test
+    t_test_result <- t.test(allYrsFinal[[column]] ~ allYrsFinal$gender)
+    
+    # Store the result in the list with the column name as the key
+    t_test_results[[column]] <- t_test_result
+  }
+}
+t_test_results
+
+```
+
+```{r}
+
+# Initialize an empty list to store the t-test results
+wilcox_results <- list()
+
+# Loop through each pattern
+for (pattern in competence) {
+  # Find the column names that match the pattern
+  matched_columns <- grep(pattern, colnames(allYrsFinal), value = TRUE)
+  
+  # Loop through each matched column and perform a t-test
+  for (column in matched_columns) {
+    # Perform the t-test
+    wilcox_result <- wilcox.test(allYrsFinal[[column]] ~ allYrsFinal$gender)
+    
+    # Store the result in the list with the column name as the key
+    wilcox_results[[column]] <- wilcox_result
+  }
+}
+wilcox_results
+
+```
+
+Where there are "other" or "don't want to answer" for the gender question
+
+```{r}
+unique(allYrsFinal$gender)
+
+allYrsFinal|>
+  filter(is.na(gender))
+```
+
+```{r}
+# note: NAs have the lowest pre and post cognitive competence, and have the greatest decrease in cognitive competence
+allYrsFinal|>
+  group_by(gender)|>
+  summarize(mean(cognitive.competence.pre))
+```
+
+```{r}
+allYrsFinal|>
+  group_by(gender)|>
+  summarize(mean(cognitive.competence.post))
+```
+
+```{r}
+allYrsFinal|>
+  group_by(gender)|>
+  summarize(mean(cognitive.competence.change))
+```
+
+

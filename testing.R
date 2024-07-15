@@ -318,17 +318,6 @@ server <- function(input, output, session) {
       data_amelia$status <- as.numeric(data_amelia$status)
       data_amelia$math.satact.flag <- as.numeric(data_amelia$math.satact.flag)
       
-    # added by Libby Brill, 7/10/24
-      # data_amelia$q16a.pre.c.1415 <- as.numeric(data_amelia$q16a.pre.c.1415 == "valid")
-      # data_amelia$q16b.pre.c.1415 <- as.numeric(data_amelia$q16b.pre.c.1415 == "valid**")
-      # data_amelia$q16c.pre.c.1415 <- as.numeric(data_amelia$q16c.pre.c.1415 == "valid")
-      # 
-      # data_amelia$q16a.pre.c <- as.numeric(data_amelia$q16a.pre.c == "checked**")
-      # data_amelia$q16b.pre.c <- as.numeric(data_amelia$q16b.pre.c == "checked")
-      # data_amelia$q16c.pre.c <- as.numeric(data_amelia$q16c.pre.c == "checked")
-      # data_amelia$q16d.pre.c <- as.numeric(data_amelia$q16d.pre.c == "checked**")
-      
-      
       ord_vars <- names(data_amelia[c(162:175)])
     #   ord_vars <- names(data_amelia[c(225:238)])
       
@@ -336,7 +325,6 @@ server <- function(input, output, session) {
     #   gpa_bound <- matrix(c(239, 1.0, 4.0), nrow = 1, ncol = 3)
 
       myidvars <- names(data_amelia[c(1:161, 184:203, 205:235, 237:257, 270:297)]) # remove 236?
-            # myidvars <- names(data_amelia[c(1:161, 184:259, 270:235, 238:297)]) # -c(162:183, 260:269, 236:237)
     #   myidvars <- names(data_amelia[c(1:224, 247:266, 268:318, 331:334, 337:387)])
 
       data_imputed <- amelia(data_amelia, m=1,
@@ -513,7 +501,7 @@ server <- function(input, output, session) {
     
   output$downloadData <- downloadHandler(
     filename = function() {
-      "AllYearsFinalPublic_Filtered.csv"
+      "AllYearsFinalSubset.csv"
     },
     content = function(file) {
       write.csv(filteredData(), file, row.names = FALSE)
@@ -525,7 +513,7 @@ server <- function(input, output, session) {
   })
   
   output$data_table <- renderTable({
-    head(filteredData())
+    head(filteredData(), n = 10)
   })
   
 }

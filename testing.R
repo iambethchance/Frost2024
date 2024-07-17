@@ -71,15 +71,14 @@ ui <- fluidPage(
 #             label = "Section response rate:",
 #             min = 0, max = 1, value = c(0.25, 1),
 #             ticks = FALSE),
-    radioButtons("imputation",
-                 label = "Impute missing values?",
-                 choices = c("Yes", "No"),
-                 selected = "No"),
     checkboxGroupInput("overall_category",
                    label = "Choose overall question categories of interest:",
                    choices = c("Attitudes",
                                "Concepts",
-                               "Demographics")),
+                               "Demographics"),
+                   selected = c("Attitudes",
+                                "Concepts",
+                                "Demographics")),
     conditionalPanel(condition = "input.overall_category.indexOf('Attitudes') > -1",
           checkboxGroupInput("attitudes_sub", 
                      label = "Attitudes Subcategories: ",
@@ -101,8 +100,12 @@ ui <- fluidPage(
     selectInput("right_wrong",
             label = "How would you like student responses formatted?: ",
             choices = c("Correct vs. Incorrect",
-                        "Original answers")
-            )
+                        "Original answers"),
+            selected = "Original answers"),
+    radioButtons("imputation",
+             label = "Impute missing values?",
+             choices = c("Yes", "No"),
+             selected = "No")
 
   ),
   mainPanel(
@@ -115,9 +118,9 @@ ui <- fluidPage(
     textOutput("school_type"),
     textOutput("class_size"),
     # textOutput("section_rr"),
-    textOutput("imputation"),
     uiOutput("overall_category"),
     textOutput("right_wrong"),
+    uiOutput("imputation"),
     downloadButton("downloadData", "Download"),
     uiOutput("dt_heading"),
     tableOutput("data_table")
@@ -261,10 +264,6 @@ server <- function(input, output, session) {
     paste("Class size:", input$class_size[1], "to", input$class_size[2], "students")
   })
   
-  output$imputation <- renderText({
-    paste("Impute missing values:", input$imputation)
-  })
-  
   output$overall_category <- renderUI({
     if (length(input$overall_category) == 0) {
       paste("Overall categories: None selected")
@@ -303,11 +302,15 @@ server <- function(input, output, session) {
     paste("Incorrect or correct: ", input$right_wrong)
   })
   
+  output$imputation <- renderUI({
+    HTML(paste("Impute missing values:", input$imputation), "<br><br>")
+  })
   
-  allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
-  postSub <- read.csv("All Years Final Public.csv", stringsAsFactors = TRUE)
+  
+  # allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
+  allYrsFinal <- read.csv("All Years Final Public.csv", stringsAsFactors = TRUE)
   filteredData <- reactive({
-    filteredData <- postSub
+    filteredData <- allYrsFinal
     
     if (input$imputation == "Yes") {
       data_amelia <- filteredData
@@ -436,14 +439,14 @@ server <- function(input, output, session) {
       data_imputed$status <- as.factor(data_imputed$status)
       data_imputed$math.satact.flag <- as.factor(data_imputed$math.satact.flag)
 
-    #
+
       data_imputed$affect.change <- data_imputed$affect.post - data_imputed$affect.pre
       data_imputed$cognitive.competence.change <- data_imputed$cognitive.competence.post - data_imputed$cognitive.competence.pre
       data_imputed$difficulty.change <- data_imputed$difficulty.post - data_imputed$difficulty.pre
       data_imputed$effort.change <- data_imputed$effort.post - data_imputed$effort.pre
       data_imputed$interest.change <- data_imputed$interest.post - data_imputed$interest.pre
       data_imputed$value.change <- data_imputed$value.post - data_imputed$value.pre
-    #
+
       
       data_imputed$answered.pre <- 1
       data_imputed$answered.pre[data_imputed$pre.perc.24 == 0] <- 0
@@ -454,7 +457,7 @@ server <- function(input, output, session) {
       data_imputed$answered.both <- 1
       data_imputed$answered.both[data_imputed$pre.perc.24 == 0 | data_imputed$post.perc.24 == 0] <- 0
 
-    #
+
       data_imputed <- data_imputed |>
         group_by(instructor.section, year) |>
         mutate(#section.num.responded = n(),
@@ -487,38 +490,59 @@ server <- function(input, output, session) {
         ) |>
         ungroup() |>
         mutate(d = (section.post.perc.24 - section.pre.perc.24) / sqrt((var.pre+var.post)/2))
-    #  
       
-      data_imputed$class.session.length[is.na(data_imputed$class.session.length) == T] <- "Unknown"
-      data_imputed$class.size.start.ind[is.na(data_imputed$class.size.start.ind) == T] <- "Unknown"
-      data_imputed$class.size.end.ind[is.na(data_imputed$class.size.end.ind) == T] <- "Unknown"
-      data_imputed$class.meet.weeks.ind[is.na(data_imputed$class.meet.weeks.ind) == T] <- "Unknown"
-      data_imputed$time.meet[is.na(data_imputed$time.meet) == T] <- "Unknown"
-      data_imputed$incentive.pre[is.na(data_imputed$incentive.pre) == T] <- "Unknown"
-      data_imputed$incentive.post[is.na(data_imputed$incentive.post) == T] <- "Unknown"
-      data_imputed$math.prereq[is.na(data_imputed$math.prereq) == T] <- "Unknown"
-      data_imputed$student.type[is.na(data_imputed$student.type) == T] <- "Unknown"
-      data_imputed$firstgen[is.na(data_imputed$firstgen) == T] <- "Unknown"
-      data_imputed$race.origin[is.na(data_imputed$race.origin) == T] <- "Unknown"
-      data_imputed$is.white[is.na(data_imputed$is.white) == T] <- "Unknown"
-      data_imputed$gaise.familiar[is.na(data_imputed$gaise.familiar) == T] <- "Unknown"
-      data_imputed$department.type[is.na(data_imputed$department.type) == T] <- "Unknown"
-      data_imputed$is.stats.department[is.na(data_imputed$is.stats.department) == T] <- "Unknown"
-      data_imputed$analyzing.data.experience[is.na(data_imputed$analyzing.data.experience) == T] <- "Unknown"
-      data_imputed$position.classification[is.na(data_imputed$position.classification) == T] <- "Unknown"
-      data_imputed$advanced.stats.degree.type[is.na(data_imputed$advanced.stats.degree.type) == T] <- "Unknown"
-      data_imputed$lecture.type[is.na(data_imputed$lecture.type) == T] <- "Unknown"
-      data_imputed$TA[is.na(data_imputed$TA) == T] <- "Unknown"
-      data_imputed$admin.pre.location[is.na(data_imputed$admin.pre.location) == T] <- "Unknown"
-      data_imputed$admin.post.location[is.na(data_imputed$admin.post.location) == T] <- "Unknown"
-      data_imputed$admin.pre.time[is.na(data_imputed$admin.pre.time) == T] <- "Unknown"
-      data_imputed$admin.post.time[is.na(data_imputed$admin.post.time) == T] <- "Unknown"
-      data_imputed$isi.workshop[is.na(data_imputed$isi.workshop) == T] <- "Unknown"
-      data_imputed$days.meet[is.na(data_imputed$days.meet) == T] <- "Unknown"
-      data_imputed$years.teaching.intro.stats.binned[is.na(data_imputed$years.teaching.intro.stats.binned) == T] <- "Unknown"
-      data_imputed$years.teaching.experience.binned[is.na(data_imputed$years.teaching.experience.binned) == T] <- "Unknown"
-      data_imputed$percent.lecture.binned[is.na(data_imputed$percent.lecture.binned) == T] <- "Unknown"
+# ###
+#       data_imputed <- data_imputed |>
+#         mutate(across(c(class.session.length, class.size.start.ind, class.size.end.ind, class.meet.weeks.ind,
+#                  time.meet, incentive.pre, incentive.post, math.prereq, student.type, firstgen,
+#                  race.origin, is.white, gaise.familiar, department.type, is.stats.department,
+#                  analyzing.data.experience, position.classification, advanced.stats.degree.type,
+#                  lecture.type, TA, admin.pre.location, admin.post.location, admin.pre.time,
+#                  admin.post.time, isi.workshop, days.meet, years.teaching.intro.stats.binned,
+#                  years.teaching.experience.binned, percent.lecture.binned), ~ as.character(.x)))
+# ### factor(.x, levels = c(levels(.x), "Unknown"))
+      
+      # data_imputed$class.session.length[is.na(data_imputed$class.session.length) == T] <- "Unknown"
+      # data_imputed$class.size.start.ind[is.na(data_imputed$class.size.start.ind) == T] <- "Unknown"
+      # data_imputed$class.size.end.ind[is.na(data_imputed$class.size.end.ind) == T] <- "Unknown"
+      # data_imputed$class.meet.weeks.ind[is.na(data_imputed$class.meet.weeks.ind) == T] <- "Unknown"
+      # data_imputed$time.meet[is.na(data_imputed$time.meet) == T] <- "Unknown"
+      # data_imputed$incentive.pre[is.na(data_imputed$incentive.pre) == T] <- "Unknown"
+      # data_imputed$incentive.post[is.na(data_imputed$incentive.post) == T] <- "Unknown"
+      # data_imputed$math.prereq[is.na(data_imputed$math.prereq) == T] <- "Unknown"
+      # data_imputed$student.type[is.na(data_imputed$student.type) == T] <- "Unknown"
+      # data_imputed$firstgen[is.na(data_imputed$firstgen) == T] <- "Unknown"
+      # data_imputed$race.origin[is.na(data_imputed$race.origin) == T] <- "Unknown"
+      # data_imputed$is.white[is.na(data_imputed$is.white) == T] <- "Unknown"
+      # data_imputed$gaise.familiar[is.na(data_imputed$gaise.familiar) == T] <- "Unknown"
+      # data_imputed$department.type[is.na(data_imputed$department.type) == T] <- "Unknown"
+      # data_imputed$is.stats.department[is.na(data_imputed$is.stats.department) == T] <- "Unknown"
+      # data_imputed$analyzing.data.experience[is.na(data_imputed$analyzing.data.experience) == T] <- "Unknown"
+      # data_imputed$position.classification[is.na(data_imputed$position.classification) == T] <- "Unknown"
+      # data_imputed$advanced.stats.degree.type[is.na(data_imputed$advanced.stats.degree.type) == T] <- "Unknown"
+      # data_imputed$lecture.type[is.na(data_imputed$lecture.type) == T] <- "Unknown"
+      # data_imputed$TA[is.na(data_imputed$TA) == T] <- "Unknown"
+      # data_imputed$admin.pre.location[is.na(data_imputed$admin.pre.location) == T] <- "Unknown"
+      # data_imputed$admin.post.location[is.na(data_imputed$admin.post.location) == T] <- "Unknown"
+      # data_imputed$admin.pre.time[is.na(data_imputed$admin.pre.time) == T] <- "Unknown"
+      # data_imputed$admin.post.time[is.na(data_imputed$admin.post.time) == T] <- "Unknown"
+      # data_imputed$isi.workshop[is.na(data_imputed$isi.workshop) == T] <- "Unknown"
+      # data_imputed$days.meet[is.na(data_imputed$days.meet) == T] <- "Unknown"
+      # data_imputed$years.teaching.intro.stats.binned[is.na(data_imputed$years.teaching.intro.stats.binned) == T] <- "Unknown"
+      # data_imputed$years.teaching.experience.binned[is.na(data_imputed$years.teaching.experience.binned) == T] <- "Unknown"
+      # data_imputed$percent.lecture.binned[is.na(data_imputed$percent.lecture.binned) == T] <- "Unknown"
 
+# ###
+#       data_imputed <- data_imputed |>
+#         mutate(across(c(class.session.length, class.size.start.ind, class.size.end.ind, class.meet.weeks.ind,
+#                         time.meet, incentive.pre, incentive.post, math.prereq, student.type, firstgen,
+#                         race.origin, is.white, gaise.familiar, department.type, is.stats.department,
+#                         analyzing.data.experience, position.classification, advanced.stats.degree.type,
+#                         lecture.type, TA, admin.pre.location, admin.post.location, admin.pre.time,
+#                         admin.post.time, isi.workshop, days.meet, years.teaching.intro.stats.binned,
+#                         years.teaching.experience.binned, percent.lecture.binned), ~ as.factor(.x)))
+# ###
+      
       filteredData <- data_imputed
     }
   
@@ -546,7 +570,7 @@ server <- function(input, output, session) {
              if (input$calc_prereq == "No") (math.prereq != "Calculus" | is.na(math.prereq) == T) else TRUE,
              textbook.classification %in% input$textbooks,
              carnegie.classification %in% input$school_type,
-             class.size.end >= input$class_size[1], class.size.end <= input$class_size[2]
+             ((class.size.end >= input$class_size[1] & class.size.end <= input$class_size[2]) | is.na(class.size.end) == T)
       )
     
     selected_columns <- c()

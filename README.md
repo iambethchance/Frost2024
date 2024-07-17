@@ -2,10 +2,7 @@
 Reading list https://docs.google.com/document/d/1mWrs2Wdc_dq46Hl2QxCmtp0AwKkGVRCils57Kbwi2xs/edit
 
 **Upcoming vacation days**
-everyone Friday 7/5
-If you have new stuff to talk about, can check in Monday 7/8 morning, but if you don't, we don't have to.
-Beth is out on Tuesday.
-You will see if you can attend the reading group on Tuesday.
+I will be out Friday - Wednesday (no internet)
 
 6/27: Possible treasure hunt: Find an article (probably by Zieffler, also by Garfield, maybe even Sabbag) that shows one of their diagrams of the simulation process.  We could give 2-3 to Stat 217/218 students this summer and see which the prefer.  See also 
 ![image](https://github.com/iambethchance/Frost2024/assets/75873576/8a06ad9c-73b3-44d7-b335-7c6b384e32a6)

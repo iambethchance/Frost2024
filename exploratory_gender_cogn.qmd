@@ -1,21 +1,30 @@
 ---
 title: "Exploratory analysis: gender and cognitive competence"
-format: html
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
 editor: visual
+embed-resources: true
 ---
 
+### Attatching packages
 ```{r}
-# packages
+#| message: false
+
 library(dplyr)
 library(readr)
+library(ggplot2)
+library(tibble)
 ```
 
+### Loading in data
 ```{r}
-# data
+#| message: false
 allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
 ```
 
-Gender and Pre boxplot
+### Gender and Pre boxplot
 
 ```{r}
 #cognitive.competence.pre	cognitive.competence.post
@@ -27,13 +36,19 @@ allYrsFinal|>
   geom_boxplot()
 ```
 
-Gender and Pre t-test
+### Gender and Pre t-test
 
 ```{r}
 t.test(allYrsFinal$cognitive.competence.pre ~ allYrsFinal$gender)
 ```
 
-Gender and Post boxplot
+### Gender and Pre Mann Whitney U Test
+```{r}
+wilcox.test(allYrsFinal$cognitive.competence.pre ~ allYrsFinal$gender)
+```
+
+
+### Gender and Post boxplot
 
 ```{r}
 allYrsFinal|>
@@ -42,14 +57,19 @@ allYrsFinal|>
   geom_boxplot()
 ```
 
-Gender and Post t-test
+### Gender and Post t-test
 
 ```{r}
 t.test(allYrsFinal$cognitive.competence.post ~ allYrsFinal$gender)
 ```
 
-Gender and Change boxplot
+### Gender and Post Mann Whitney U test
+```{r}
+wilcox.test(allYrsFinal$cognitive.competence.post ~ allYrsFinal$gender)
+```
 
+
+### Gender and Change boxplot
 ```{r}
 allYrsFinal|>
   #filter(!is.na(gender), !is.na(cognitive.competence.change)) |>
@@ -57,10 +77,17 @@ allYrsFinal|>
   geom_boxplot()
 ```
 
+### Gender and Change t-test
 ```{r}
 t.test(allYrsFinal$cognitive.competence.change ~ allYrsFinal$gender)
 ```
 
+### Gender and Change Mann-Whitney U test
+```{r}
+wilcox.test(allYrsFinal$cognitive.competence.change ~ allYrsFinal$gender)
+```
+
+## By Question:
 Post:
 
 -   6e: I had trouble understanding statistics because of how I think.
@@ -123,7 +150,7 @@ wilcox_results
 
 ```
 
-Where there are "other" or "don't want to answer" for the gender question
+### Where there are "other" or "don't want to answer" for the gender question
 
 ```{r}
 unique(allYrsFinal$gender)
@@ -132,6 +159,7 @@ allYrsFinal|>
   filter(is.na(gender))
 ```
 
+### Mean pre cog comp by gender
 ```{r}
 # note: NAs have the lowest pre and post cognitive competence, and have the greatest decrease in cognitive competence
 allYrsFinal|>
@@ -139,16 +167,44 @@ allYrsFinal|>
   summarize(mean(cognitive.competence.pre))
 ```
 
+### Mean post cog comp by gender
 ```{r}
 allYrsFinal|>
   group_by(gender)|>
   summarize(mean(cognitive.competence.post))
 ```
 
+### Mean change cog comp by gender
 ```{r}
 allYrsFinal|>
   group_by(gender)|>
   summarize(mean(cognitive.competence.change))
 ```
+
+### How much do individual questions differ in terms of mean female - mean male to other ones within cog comp?
+```{r}
+competence <- c("^q6e", "^q7a", "^q8f", "^q9a", "^q9b", "^q9e")
+competenceFull <- c("q6e.pre.a", "q6e.post.a", "q7a.pre.a", "q7a.post.a", "q8f.pre.a", "q8f.post.a", "q9a.pre.a", "q9a.post.a", "q9b.pre.a", "q9b.post.a", "q9e.pre.a", "q9e.post.a")
+#competenceFull
+qDiffsGender <- list()
+for (q in competenceFull) {
+  q <- sym(q)
+  question <- allYrsFinal|>
+    group_by(gender)|>
+    filter(!is.na(!!q))|>
+    summarize(mean(!!q))
+  qDiffsGender[[q]] <- question[[1,2]] - question[[2,2]]
+}
+
+#questionDiffs
+
+qDiffsGender_df <- enframe(unlist(qDiffsGender), name = "question", value = "diff")
+qDiffsGender_df
+```
+
+
+
+
+
 
 

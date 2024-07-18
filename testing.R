@@ -87,7 +87,13 @@ ui <- fluidPage(
                                  "Difficulty",
                                  "Effort",
                                  "Interest",
-                                 "Value"))),
+                                 "Value"),
+                     selected = c("Affect",
+                                  "Cognitive Competence",
+                                  "Difficulty",
+                                  "Effort",
+                                  "Interest",
+                                  "Value"))),
     conditionalPanel(condition = "input.overall_category.indexOf('Concepts') > -1",
           checkboxGroupInput("concepts_sub",
                      label = "Concepts Subcategories: ",
@@ -96,14 +102,20 @@ ui <- fluidPage(
                                  "Confidence Intervals",
                                  "Scope of Conclusions",
                                  "Significance",
-                                 "Simulation"))),
+                                 "Simulation"),
+                     selected = c("Data Collection",
+                                  "Descriptive Statistics",
+                                  "Confidence Intervals",
+                                  "Scope of Conclusions",
+                                  "Significance",
+                                  "Simulation"))),
     selectInput("right_wrong",
-            label = "How would you like student responses formatted?: ",
+            label = "Type of student responses:",
             choices = c("Correct vs. Incorrect",
                         "Original answers"),
             selected = "Original answers"),
     radioButtons("imputation",
-             label = "Impute missing values?",
+             label = HTML('<a href="Imputation.html" target="_blank">Impute missing values?</a>', "<br>(may take several minutes)"),
              choices = c("Yes", "No"),
              selected = "No")
 
@@ -266,40 +278,50 @@ server <- function(input, output, session) {
   
   output$overall_category <- renderUI({
     if (length(input$overall_category) == 0) {
-      paste("Overall categories: None selected")
+      "Overall categories: None selected"
+    } else {
+    
+      overall_category_text <- paste("Overall categories:", paste(input$overall_category, collapse = ", "))
+      attitudes_sub_text <- ""
+      concepts_sub_text <- ""
+    
+      if ("Attitudes" %in% input$overall_category) {
+        attitudes_sub_text <- paste( 
+          "Attitudes Subcategories:", 
+          if (length(input$attitudes_sub) == 6) {
+            "All selected"
+          } else if (length(input$attitudes_sub) > 0) {
+            paste(input$attitudes_sub, collapse = ", ")
+          } else {
+            "None selected"
+          })
+      }
+    
+      if ("Concepts" %in% input$overall_category) {
+        concepts_sub_text <- paste(
+          "Concepts Subcategories:", 
+          if (length(input$concepts_sub) == 6) {
+            "All selected"
+          } else if (length(input$concepts_sub) > 0) {
+            paste(input$concepts_sub, collapse = ", ")
+          } else {
+            "None selected"
+          })
+      }
+    
+      if ("Attitudes" %in% input$overall_category) {
+        HTML(paste(overall_category_text), "<br>",
+             paste(attitudes_sub_text), "<br>",
+             paste(concepts_sub_text))
+      } else {
+        HTML(paste(overall_category_text), "<br>",
+             paste(concepts_sub_text))
+      }
     }
-    
-    overall_category_text <- paste("Overall categories:", paste(input$overall_category, collapse = ", "))
-    attitudes_sub_text <- ""
-    concepts_sub_text <- ""
-    
-    if ("Attitudes" %in% input$overall_category) {
-      attitudes_sub_text <- paste( 
-        "Attitudes Subcategories: ", 
-        if (length(input$attitudes_sub) > 0) {
-          paste(input$attitudes_sub, collapse = ", ")
-        } else {
-          "None selected"
-        }, sep = "\n")
-    }
-    
-    if ("Concepts" %in% input$overall_category) {
-      concepts_sub_text <- paste(
-        "\nConcepts Subcategories: ", 
-        if (length(input$concepts_sub) > 0) {
-          paste(input$concepts_sub, collapse = ", ")
-        } else {
-          "None selected"
-        }, sep = "")
-    }
-    
-    HTML(paste(overall_category_text), "<br>", 
-         paste(attitudes_sub_text), "<br>",
-         paste(concepts_sub_text))
     
   })
   output$right_wrong <- renderText({
-    paste("Incorrect or correct: ", input$right_wrong)
+    paste("Type of student responses:", input$right_wrong)
   })
   
   output$imputation <- renderUI({
@@ -307,10 +329,39 @@ server <- function(input, output, session) {
   })
   
   
-  # allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
-  allYrsFinal <- read.csv("All Years Final Public.csv", stringsAsFactors = TRUE)
+  allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
+  # allYrsFinal <- read.csv("All Years Final Public.csv", stringsAsFactors = TRUE)
   filteredData <- reactive({
     filteredData <- allYrsFinal
+    
+    filteredData <- filteredData |>
+      mutate(school.year = case_when(endsWith(as.character(instructor.section), "14-15") ~ "2014-15 school year",
+                                     endsWith(as.character(instructor.section), "15-16") ~ "2015-16 school year",
+                                     endsWith(as.character(instructor.section), "16-17") ~ "2016-17 school year")) |>
+      filter(school.year %in% input$year) |>
+      select(-school.year) |>
+      filter(case_when(input$pre_post_tests == "Students who took the pre-test"
+                       ~ (c.rr.pre >= input$response_rate[1] & c.rr.pre <= input$response_rate[2]),
+                       input$pre_post_tests == "Students who took the post-test"
+                       ~ (c.rr.post >= input$response_rate[1] & c.rr.post <= input$response_rate[2]),
+                       input$pre_post_tests == "Students who took both the pre- and post-tests"
+                       ~ (c.rr.pre >= input$response_rate[1] & c.rr.pre <= input$response_rate[2] & c.rr.post >= input$response_rate[1] & c.rr.post <= input$response_rate[2]
+                       )),
+             # c.rr.pre >= input$response_rate[1], c.rr.pre <= input$response_rate[2],
+             # c.rr.post >= input$response_rate[1], c.rr.post <= input$response_rate[2],
+             ach.gain.24 > input$achievable_gain[1], ach.gain.24 < input$achievable_gain[2],
+             case_when(
+               input$pre_post_tests == "Students who took the pre-test" ~ (is.na(opt.out.pre) == FALSE),
+               input$pre_post_tests == "Students who took the post-test" ~ (is.na(opt.out.post) == FALSE),
+               input$pre_post_tests == "Students who took both the pre- and post-tests" ~ (is.na(opt.out.pre) == FALSE & is.na(opt.out.post) == FALSE)
+             ),
+             if (input$calc_prereq == "No") (math.prereq != "Calculus" | is.na(math.prereq) == T) else TRUE,
+             textbook.classification %in% input$textbooks,
+             carnegie.classification %in% input$school_type,
+             ((class.size.end >= input$class_size[1] & class.size.end <= input$class_size[2]) | is.na(class.size.end) == T)
+      )
+    
+    
     
     if (input$imputation == "Yes") {
       data_amelia <- filteredData
@@ -545,33 +596,7 @@ server <- function(input, output, session) {
       
       filteredData <- data_imputed
     }
-  
-    filteredData <- filteredData |>
-      mutate(school.year = case_when(endsWith(as.character(instructor.section), "14-15") ~ "2014-15 school year",
-                                     endsWith(as.character(instructor.section), "15-16") ~ "2015-16 school year",
-                                     endsWith(as.character(instructor.section), "16-17") ~ "2016-17 school year")) |>
-      filter(school.year %in% input$year) |>
-      select(-school.year) |>
-      filter(case_when(input$pre_post_tests == "Students who took the pre-test"
-                          ~ (c.rr.pre >= input$response_rate[1] & c.rr.pre <= input$response_rate[2]),
-                       input$pre_post_tests == "Students who took the post-test"
-                          ~ (c.rr.post >= input$response_rate[1] & c.rr.post <= input$response_rate[2]),
-                       input$pre_post_tests == "Students who took both the pre- and post-tests"
-                          ~ (c.rr.pre >= input$response_rate[1] & c.rr.pre <= input$response_rate[2] & c.rr.post >= input$response_rate[1] & c.rr.post <= input$response_rate[2]
-                       )),
-             # c.rr.pre >= input$response_rate[1], c.rr.pre <= input$response_rate[2],
-             # c.rr.post >= input$response_rate[1], c.rr.post <= input$response_rate[2],
-             ach.gain.24 > input$achievable_gain[1], ach.gain.24 < input$achievable_gain[2],
-             case_when(
-               input$pre_post_tests == "Students who took the pre-test" ~ (is.na(opt.out.pre) == FALSE),
-               input$pre_post_tests == "Students who took the post-test" ~ (is.na(opt.out.post) == FALSE),
-               input$pre_post_tests == "Students who took both the pre- and post-tests" ~ (is.na(opt.out.pre) == FALSE & is.na(opt.out.post) == FALSE)
-             ),
-             if (input$calc_prereq == "No") (math.prereq != "Calculus" | is.na(math.prereq) == T) else TRUE,
-             textbook.classification %in% input$textbooks,
-             carnegie.classification %in% input$school_type,
-             ((class.size.end >= input$class_size[1] & class.size.end <= input$class_size[2]) | is.na(class.size.end) == T)
-      )
+
     
     selected_columns <- c()
     
@@ -593,26 +618,26 @@ server <- function(input, output, session) {
     
     
     if ("Attitudes" %in% input$overall_category) {
-      subcategories_selected <- FALSE
+      # subcategories_selected <- FALSE
       if ("Affect" %in% input$attitudes_sub) {
         selected_columns <- c(selected_columns, grep(paste(affect, collapse = "|"), 
                                                      colnames(filteredData), value = TRUE))
-        subcategories_selected <- TRUE
+        # subcategories_selected <- TRUE
       }
       if ("Cognitive Competence" %in% input$attitudes_sub){
         selected_columns <- c(selected_columns, grep(paste(competence, collapse = "|"),
                                                      colnames(filteredData), value = TRUE))
-        subcategories_selected <- TRUE
+        # subcategories_selected <- TRUE
       }
       if("Difficulty" %in% input$attitudes_sub){
         selected_columns <- c(selected_columns, grep(paste(difficulty, collapse = "|"),
                                                      colnames(filteredData), value = TRUE))
-        subcategories_selected <- TRUE
+        # subcategories_selected <- TRUE
       }
       if("Effort" %in% input$attitudes_sub){
         selected_columns <- c(selected_columns, grep(paste(effort, collapse = "|"),
                                                      colnames(filteredData), value = TRUE))
-        subcategories_selected <- TRUE
+        # subcategories_selected <- TRUE
       }
       if("Interest" %in% input$attitudes_sub){
         selected_columns <- c(selected_columns, grep(paste(interest, collapse = "|"),
@@ -621,61 +646,62 @@ server <- function(input, output, session) {
       if("Value" %in% input$attitudes_sub){
         selected_columns <- c(selected_columns, grep(paste(value_, collapse = "|"),
                                                      colnames(filteredData), value = TRUE))
-        subcategories_selected <- TRUE
+        # subcategories_selected <- TRUE
       }
-      if (subcategories_selected == FALSE){
-        selected_columns <- c(selected_columns, grep("^q[6-9]", colnames(filteredData), value = TRUE))
-      }
+      # if (subcategories_selected == FALSE){
+      #   selected_columns <- c(selected_columns, grep("^q[6-9]", colnames(filteredData), value = TRUE))
+      # }
       
     }
     
     if ("Concepts" %in% input$overall_category) {
-      subcatgories_selected <- FALSE
+      # subcatgories_selected <- FALSE
       if("Confidence Intervals" %in% input$concepts_sub){
         selected_columns <- c(selected_columns, grep(paste(confidence, collapse = "|"),
                                                      colnames(filteredData), value = TRUE))
-        subcategories_selected <- TRUE
+        # subcategories_selected <- TRUE
       }
       if("Data Collection" %in% input$concepts_sub){
         selected_columns <- c(selected_columns, grep(paste(data_collection, collapse = "|"),
                                                      colnames(filteredData), value = TRUE))
-        subcategories_selected <- TRUE
+        # subcategories_selected <- TRUE
       }
       
       if("Descriptive Statistics" %in% input$concepts_sub){
         selected_columns <- c(selected_columns, grep(paste(descriptive_stats, collapse = "|"),
                                                      colnames(filteredData), value = TRUE))
-        subcategories_selected <- TRUE
+        # subcategories_selected <- TRUE
       }
       
       if("Scope of Conclusions" %in% input$concepts_sub){
         selected_columns <- c(selected_columns, grep(paste(conclusions, collapse = "|"),
                                                      colnames(filteredData), value = TRUE))
-        subcategories_selected <- TRUE
+        # subcategories_selected <- TRUE
       }
       
       if("Significance" %in% input$concepts_sub){
         selected_columns <- c(selected_columns, grep(paste(significance, collapse = "|"),
                                                      colnames(filteredData), value = TRUE))
-        subcategories_selected <- TRUE
+        # subcategories_selected <- TRUE
       }
       
       if("Simulation" %in% input$concepts_sub){
         selected_columns <- c(selected_columns, grep(paste(simulation, collapse = "|"),
                                                      colnames(filteredData), value = TRUE))
-        subcategories_selected <- TRUE
+        # subcategories_selected <- TRUE
       }
       
-      if(subcatgories_selected == FALSE) { 
-        selected_columns <- c(selected_columns, grep("^q1[6-9]", colnames(filteredData), value = TRUE), 
-                              grep("^q2[0-9]", colnames(filteredData), value = TRUE), 
-                              grep("^q3[0-9]", colnames(filteredData), value = TRUE), 
-                              grep("^q4[0-7]", colnames(filteredData), value = TRUE))
-      }
+      # if(subcatgories_selected == FALSE) { 
+      #   selected_columns <- c(selected_columns, grep("^q1[6-9]", colnames(filteredData), value = TRUE), 
+      #                         grep("^q2[0-9]", colnames(filteredData), value = TRUE), 
+      #                         grep("^q3[0-9]", colnames(filteredData), value = TRUE), 
+      #                         grep("^q4[0-7]", colnames(filteredData), value = TRUE))
+      # }
+      
       if (input$right_wrong == "Correct vs. Incorrect") {
         filteredData <- filteredData |>
           mutate(across(starts_with("q"), ~ if_else(grepl("\\*\\*$", as.character(.)), "correct", "incorrect")))
-        print(filteredData$q43.post.c)
+        # print(filteredData$q43.post.c)
       }
     }
     

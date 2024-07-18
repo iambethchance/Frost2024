@@ -310,9 +310,9 @@ server <- function(input, output, session) {
       }
     
       if ("Attitudes" %in% input$overall_category) {
-        HTML(paste(overall_category_text), "<br>",
+        HTML(paste(overall_category_text), "<br><div style='padding-left: 20px;'>",
              paste(attitudes_sub_text), "<br>",
-             paste(concepts_sub_text))
+             paste(concepts_sub_text), "</div>")
       } else {
         HTML(paste(overall_category_text), "<br>",
              paste(concepts_sub_text))

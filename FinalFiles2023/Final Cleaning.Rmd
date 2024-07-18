@@ -15,8 +15,8 @@ load(url("http://www.rossmanchance.com/iscam3/ISCAM.RData"))
 library(here)
 ```
 
+#### Comparisons Function
 
-#### Comparisons Function ####
 ```{r}
 comparisons <- function(pre_q, post_q, param){
   new_vector = NULL
@@ -49,8 +49,8 @@ comparisons <- function(pre_q, post_q, param){
 }
 ```
 
+### READING IN DATA
 
-### READING IN DATA ###
 ```{r}
 
 # Modified 5/2 by Sean Leader to use the here() function for reproducitibility
@@ -63,8 +63,8 @@ data1516 <- cbind(data1516, year="15-16")
 data1415 <- cbind(data1415, year="14-15")
 ```
 
+### Removing Variables
 
-### Removing Variables ### 
 ```{r}
 ### YEAR 1 ###
 data1415$checkname <- NULL
@@ -87,8 +87,8 @@ data1617$conceptPctAnswered_post <- NULL
 data1617$pre_c_rr <- NULL
 ```
 
+### Renaming Variables
 
-### Renaming Variables ###
 ```{r}
 ### YEAR 1 ###
 names(data1415)[names(data1415)=="StartDate_pre"] <- "Start.Time_pre"
@@ -205,8 +205,8 @@ names(data1617)[names(data1617)=="race.other_post"] <- "race_origin_other"
 names(data1617)[names(data1617)=="satact_zscore"] <- "SATACTzscore"
 ```
 
+### Overall Attitude Variable
 
-### Overall Attitude Variable ### 
 ```{r}
 ### YEAR 1 ###
 data1415$overall_attitude_pre <- NA
@@ -267,8 +267,8 @@ data1617$overall_attitude_post <- (rowSums(data1617[ , c("Q6.c_post_a", "Q6.d_po
                                                          "Q9.c_post_a")], na.rm = T)) / 25
 ```
 
+### Class Length Minutes
 
-### Class Length Minutes ### 
 ```{r}
 # short <= 60
 # 61 <= medium <= 90
@@ -415,8 +415,8 @@ for (i in 1:dim(data1617)[1]) {
 data1617$class.session.length <- as.factor(data1617$class.session.length)
 ```
 
+### Class Size Variable
 
-### Class Size Variable ###
 ```{r}
 ### YEAR 1 ###
 data1415$class.size.start <- as.numeric(as.character(data1415$class.size.start))
@@ -477,8 +477,8 @@ data1617$class.size.start.ind <- as.factor(data1617$class.size.start.ind)
 data1617$class.size.end.ind <- as.factor(data1617$class.size.end.ind)
 ```
 
+### Previous Stat Courses
 
-### Previous Stat Courses ### 
 ```{r}
 ### YEAR 1 ###
 # 0 = No #
@@ -524,8 +524,8 @@ data1617$prev.stat.course[data1617$recent.stat_pre == 5 | data1617$recent.stat_p
 data1617$prev.stat.course <- as.factor(data1617$prev.stat.course)
 ```
 
+### Class Meet Weeks
 
-### Class Meet Weeks ###
 ```{r}
 ### YEAR 1 ###
 data1415$class.meet.weeks.ind <- NA
@@ -560,8 +560,8 @@ for (i in 1:dim(data1617)[1]) {
 data1617$class.meet.weeks.ind <- as.factor(data1617$class.meet.weeks.ind)
 ```
 
+### Time of Day Variable
 
-### Time of Day Variable ### 
 ```{r}
 ### YEAR 1 ###
 
@@ -832,8 +832,8 @@ for (i in 1:nrow(data1617)) {
 data1617$time.meet <- as.factor(data1617$time.meet)
 ```
 
+### Incentive Classification Pre
 
-### Incentive Classification Pre ### 
 ```{r}
 ### YEAR 1 ###
 data1415$incentive.pre <- NA
@@ -1161,8 +1161,8 @@ for (i in 1:dim(data1617)[1]) {
 data1617$incentive.pre <- as.factor(data1617$incentive.pre)
 ```
 
+### Incentive Classification Post
 
-### Incentive Classification Post ###
 ```{r}
 ### YEAR 1 ###
 data1415$incentive.post <- NA
@@ -1495,8 +1495,8 @@ for (i in 1:dim(data1617)[1]) {
 data1617$incentive.post <- as.factor(data1617$incentive.post)
 ```
 
+### Math Prereq
 
-### Math Prereq ### 
 ```{r}
 ### YEAR 1 ###
 data1415$math.prereq.original <- as.character(data1415$math.prereq)
@@ -1605,8 +1605,8 @@ data1617$math.prereq[data1617$InstructorName_Section_Semester=="Alberts_Section1
 data1617$math.prereq <- as.factor(data1617$math.prereq)
 ```
 
+### More Courses
 
-### More Courses ### 
 ```{r}
 ### YEAR 1 ###
 data1415$morecourses = (data1415$Graduate_Applied_Stats !="0" & data1415$Graduate_Applied_Stats !="" & data1415$Graduate_Applied_Stats != "None" & data1415$Graduate_Theoretical_Stats !="None" & data1415$Graduate_Applied_Stats !=0 & data1415$Graduate_Applied_Stats != "") 
@@ -1621,8 +1621,8 @@ data1617$morecourses = (data1617$advanced.stats.degree != "No" & data1617$advanc
 data1617$morecourses <- as.factor(data1617$morecourses)
 ```
 
+### Special Cases Of Textbook Classification (DO NOT MOVE)
 
-### Special Cases Of Textbook Classification (DO NOT MOVE) ###
 ```{r}
 ### YEAR 1 - NONE ###
 ### YEAR 2 ###
@@ -1636,8 +1636,8 @@ data1617$textbook.classification[data1617$InstructorName_Section_Semester=="Henl
 data1617$textbook.classification[data1617$InstructorName_Section_Semester=="Henle_Section2_Fall"] <- "ISI"
 ```
 
+### Student Type
 
-### Student Type ###
 ```{r}
 ### YEAR 1 - NO DATA ###
 data1415$student.type <- NA
@@ -1660,8 +1660,8 @@ data1617$student.type <- as.factor(data1617$student.type)
 levels(data1617$student.type) <-c(NA, "LowerGE", "LowerReq", "HS", "UpperReq", "UpperGE")
 ```
 
+### First Generation
 
-### First Generation ### 
 ```{r}
 ### YEAR 1 - NO DATA ###
 data1415$firstgen <- NA
@@ -1682,8 +1682,8 @@ data1617$firstgen[data1617$firstgen == 3] <- NA
 data1617$firstgen <- as.factor(data1617$firstgen)
 ```
 
+### Instructor Name
 
-### Instructor Name ### 
 ```{r}
 ### YEAR 1 - NO DATA ###
 data1415$instructor.name <- NA
@@ -1695,8 +1695,8 @@ data1516$instructor.name <- paste(data1516$instructor.first.name,data1516$instru
 data1617$instructor.name <- paste(data1617$instructor.first.name,data1617$instructor.last.name)
 ```
 
+### Fixing section variable for later
 
-### Fixing section variable for later ###
 ```{r}
 ### YEAR 1 ###
 # Can't combine lastname with section and semester because the variable section has the wrong section numbers #
@@ -1714,8 +1714,8 @@ data1415$section <- str_sub(sapply(str_split(data1415$InstructorName_Section_Sem
 ### YEAR 3 - correct format ###
 ```
 
+### Gender
 
-### Gender ### 
 ```{r}
 ### YEAR 1 ###
 data1415$gender <- comparisons(data1415$gender_pre, data1415$gender_post, .1)
@@ -1739,8 +1739,8 @@ data1617$gender[data1617$gender == "2"] <- "Male"
 data1617$gender <- as.factor(data1617$gender)
 ```
 
+### Age
 
-### Age ###
 ```{r}
 ### YEAR 1 ###
 data1415$age <- comparisons(data1415$age_pre, data1415$age_post, 1)
@@ -1752,8 +1752,8 @@ data1516$age <- data1516$age_pre
 data1617$age <- comparisons(data1617$age_pre, data1617$age_post, 1)
 ```
 
+### Why Take / Is Major Course
 
-### Why Take / Is Major Course ### 
 ```{r}
 ### YEAR 1 ###
 ### Makes why_take_pre for 14-15 ###
@@ -1823,8 +1823,8 @@ data1617$is.major.course[data1617$why_take_pre == 123] <- "major course"
 data1617$is.major.course <- as.factor(data1617$is.major.course)
 ```
 
+### Race
 
-### Race ### 
 ```{r}
 ### YEAR 1 - NO DATA ###
 data1415$race_origin <- NA
@@ -1851,8 +1851,8 @@ data1617$is.white[data1617$race_origin == 1] <- T # = white (only) vs rest
 data1617$is.white <- as.factor(data1617$is.white)
 ```
 
+### GPA & SATACTzscore
 
-### GPA & SATACTzscore ### 
 ```{r}
 ### YEAR 1 ###
 data1415$gpa <- comparisons(data1415$gpa_pre, data1415$gpa_post, .25)
@@ -1866,8 +1866,8 @@ data1617$gpa <- comparisons(data1617$gpa_pre, data1617$gpa_post, .25)
 data1617$gpa[data1617$gpa > 4.0] <- 4.0
 ```
 
+### Instructor Gender
 
-### Instructor Gender ###
 ```{r}
 ### YEAR 1 ###
 data1415$instructor.gender <- as.character(data1415$instructor.gender)
@@ -1879,9 +1879,9 @@ data1415$instructor.gender <- as.factor(data1415$instructor.gender)
 
 ### YEAR 3 - already clean ###
 ```
- 
- 
-### Instructor Knowledge of GAISE ###
+
+### Instructor Knowledge of GAISE
+
 ```{r}
 ### YEAR 1 ###
 data1415$gaise.familiar <- as.character(data1415$gaise.familiar)
@@ -1899,8 +1899,8 @@ data1617$gaise.familiar[data1617$gaise.familiar == ""] <- NA
 data1617$gaise.familiar <- as.factor(data1617$gaise.familiar)
 ```
 
+### Instructor Department Classification
 
-### Instructor Department Classification ###
 ```{r}
 ### YEAR 1 ###
 data1415$department.type <- NA
@@ -1982,8 +1982,8 @@ data1617$is.stats.department[data1617$department.type=="Math"] <- "Not Stats"
 data1617$is.stats.department <- as.factor(data1617$is.stats.department)
 ```
 
+### Analyzing data experience
 
-### Analyzing data experience ###
 ```{r}
 ### YEAR 1 ###
 names(data1415)[names(data1415)=="Data_Analysis_Experience"] <- "analyzing.data.experience"
@@ -2006,8 +2006,8 @@ data1617$analyzing.data.experience <- as.factor(data1617$analyzing.data.experien
 data1617$analyzing.data.experience <- droplevels(data1617$analyzing.data.experience)
 ```
 
+### Major / Field
 
-### Major / Field ### 
 ```{r}
 ### YEAR 1 ###
 ### if field_pre is missing, then recode field_pre as field_post (if available) ###
@@ -2075,8 +2075,8 @@ data1617$field_major_final <- mapvalues(data1617$field_major_final, from = c(0,1
 data1617$field_major_final <- as.factor(data1617$field_major_final)
 ```
 
+### Percent Lecture
 
-### Percent Lecture ###
 ```{r}
 ### YEAR 1 ###
 data1415$percent.lecture <- as.numeric(data1415$X.Traditional_Learning)
@@ -2089,8 +2089,8 @@ data1516$percent.lecture <- 100 * data1516$percent.lecture
 ### YEAR 3 - already clean ###
 ```
 
+### Special Cases / Explanations for certain Instructors
 
-### Special Cases / Explanations for certain Instructors ### 
 ```{r}
 ### YEAR 1 ###
 ## "HollingsworthSection1_fall" gave pre and post, admin.post.location needs to be changed to NA
@@ -2125,8 +2125,8 @@ data1617$admin.post.location[data1617$InstructorName_Section_Semester == "Gorgui
 
 ```
 
+### Renaming Q16, 17, 18 on 14-15 data
 
-### Renaming Q16, 17, 18 on 14-15 data ### 
 ```{r}
 ### PRE ###
 # Q16_1415_a / b/ c; same for RW; newQ16_pre --> Q16_pre_RW
@@ -2175,8 +2175,8 @@ data1415$Q16_post_c_RW <- (data1415$Q16_a_post_c_1415_RW + data1415$Q16_b_post_c
 data1415$Q16_post_c_RW[data1415$Q16_not_answered_post == T] <- NA
 ```
 
+### Shifting columns; 48ab --\> 46ab and 49 --\> 47
 
-### Shifting columns; 48ab --> 46ab and 49 --> 47 ### 
 ```{r}
 # Turns Q19_pre_c to Q47_pre_c --> Q17_pre_c to Q45_pre_c
 for (i in c(17:45))
@@ -2219,8 +2219,8 @@ data1415 <- subset(data1415, select = -c(Q46_pre_c, Q46_post_c, Q46_pre_c_RW, Q4
 ### RWs: Q16_pre/post_c_RW through Q47_pre/post_c_RW ###
 ```
 
+### Fixing Q16 on 15-16 data
 
-### Fixing Q16 on 15-16 data ###
 ```{r}
 ### Fixing data1516 Q16a - Q16d & RWs PRE ###
 ### NA's are being treated as correct in Q16b and Q16c, otherwise NA's are incorrect ###
@@ -2266,8 +2266,8 @@ data1516$Q16_post_c_RW[data1516$Q16_not_answered_post == T] <- NA
 ### RWs: Q16_pre/post_c_RW through Q47_pre/post_c_RW ###
 ```
 
+### Fixing Q16 on 16-17 data
 
-### Fixing Q16 on 16-17 data ### 
 ```{r}
 ### Fixing data1617 Q16a - Q16d & RWs PRE ###
 ### NA's are being treated as correct in Q16b and Q16c, otherwise NA's are incorrect ###
@@ -2314,8 +2314,8 @@ data1617$Q16_post_c_RW[data1617$Q16_not_answered_post == T] <- NA
 ### RWs: Q16_pre/post_c_RW through Q47_pre/post_c_RW ###
 ```
 
+### Writing out before combining
 
-### Writing out before combining ###
 ```{r}
 # Changed 5/2 by Sean Leader to output to a "Data" folder
 write.csv(data1415, "Data/test1.csv")
@@ -2323,9 +2323,8 @@ write.csv(data1516, "Data/test2.csv")
 write.csv(data1617, "Data/test3.csv")
 ```
 
+### COMBINING DATA
 
-
-### COMBINING DATA ###
 ```{r}
 library(plyr)
 
@@ -2338,8 +2337,8 @@ allyears <- rbind.fill(data1617_post, data1516_post, data1415_post)
 data = allyears
 ```
 
+### Fixing the RWs
 
-### Fixing the RWs ### 
 ```{r}
 ### PRE ###
 #Q17#
@@ -2669,8 +2668,8 @@ data$Q47_post_c_RW[data$Q47_post_c == 4 | data$Q47_post_c == "d**"] <- 1
 data$Q47_post_c_RW[is.na(data$Q47_post_c) == T] <- NA
 ```
 
+### Creating new data set with condensed for new notebook
 
-### Creating new data set with condensed for new notebook ###
 ```{r}
 ## Condensed has 587 obs ###
 condensed <- data %>%
@@ -2680,24 +2679,24 @@ condensed <- data %>%
 write.csv(condensed, "Data/Condensed Final v3.csv")
 ```
 
+### Removing Condensed
 
-### Removing Condensed ###
 ```{r}
 ### Will go from 15973 to 15386 ###
 data <- data %>%
   filter(semester != "Condensed")
 ```
 
+### REMOVE PEOPLE WHO STRICTLY OPTED OUT
 
-### REMOVE PEOPLE WHO STRICTLY OPTED OUT ###
 ```{r}
 ### Go from 15386 to 14792 ###
 data <- data[data$Opt.out_pre==1 | is.na(data$Opt.out_pre) == T,]
 data <- data[data$Opt.out_post==1 | is.na(data$Opt.out_post) == T,]
 ```
 
+### Creating a Q16_not_answered Check for RR later
 
-### Creating a Q16_not_answered Check for RR later ###
 ```{r}
 ### Creates not answered for 14-15 and sets everyone to NA to coalesce later ###
 ### Note this is for PRE ###
@@ -2734,8 +2733,8 @@ data$Q16_check_post <- 1
 data$Q16_check_post[data$Q16_not_answered_post == T] <- NA
 ```
 
+### Semester fixing/renaming
 
-### Semester fixing/renaming ###
 ```{r}
 data$semester <- coalesce(data$semester, data$semester.1)
 data$semester <- as.character(data$semester)
@@ -2748,8 +2747,8 @@ data$semester <- as.factor(data$semester)
 data$semester <- droplevels(data$semester)
 ```
 
+### Remaking Concept Scales
 
-### Remaking Concept Scales ###
 ```{r}
 ### DC ###
 data$Pre_DC_final <-(rowSums(data[ , c("Q16_pre_c_RW", "Q24_pre_c_RW", "Q27_pre_c_RW", "Q44_pre_c_RW")], 
@@ -2799,8 +2798,8 @@ data$Post_Sim_final <- (rowSums(data[ , c("Q34_post_c_RW", "Q35_post_c_RW", "Q37
 data$Sim_gains_final <- data$Post_Sim_final - data$Pre_Sim_final
 ```
 
+### Remaking Attitude Scales
 
-### Remaking Attitude Scales ###
 ```{r}
 data$Affect_pre <- (rowSums(data[ , c("Q6.c_pre_a", "Q6.d_pre_a", "Q7.e_pre_a", "Q7.h_pre_a", "Q7.i_pre_a", 
                                       "Q8.h_pre_a")], na.rm = T)) / 6
@@ -2864,8 +2863,8 @@ data$Value_post[data$Value_post == 0] <- NA
 data$Value_change <- data$Value_post - data$Value_pre
 ```
 
+### Creating Question Sets Variables; Go from 33 Q's to 24 Q's
 
-### Creating Question Sets Variables; Go from 33 Q's to 24 Q's ###
 ```{r}
 ### Creating Sets for data pre ###
 # data$Q16_pre_c_RW
@@ -2886,8 +2885,8 @@ data$Q373839_post_c <- (rowSums(data[, c("Q37_post_c_RW", "Q38_post_c_RW", "Q39_
 data$Q4041_post_c <- (rowSums(data[c("Q40_post_c_RW", "Q41_post_c_RW")], na.rm = T)) / 2
 ```
 
+### Remaking Percent Correct's
 
-### Remaking Percent Correct's ###
 ```{r}
 ### data pre/post.perc.33 ###
 RWsPre_33 <- c(which(colnames(data) == "Q16_pre_c_RW"), which(colnames(data) == "Q17_pre_c_RW"), 
@@ -2916,8 +2915,8 @@ data$pre.perc.24 <- (rowSums(data[ , RWsPre_24], na.rm = T)) / 24
 data$post.perc.24 <- (rowSums(data[ , RWsPost_24], na.rm = T)) / 24
 ```
 
+### Fixing response rate
 
-### Fixing response rate ### 
 ```{r}
 RWsPre_33_RR <- c(which(colnames(data) == "Q16_check_pre"), which(colnames(data) == "Q17_pre_c"), 
                   which(colnames(data) == "Q18_pre_c"),
@@ -2936,23 +2935,23 @@ data$pre_a_rr <- (36 - rowSums(is.na(data[ , AttitudesPre_36]))) / 36
 data$POST_a_RR <- (36 - rowSums(is.na(data[ , AttitudesPost_36]))) / 36
 ```
 
+### Fixing Test time pre and post
 
-### Fixing Test time pre and post ###
 ```{r}
 data$test.time.pre <- as.numeric(difftime(as.POSIXct(data$End.Time_pre, format = "%m/%d/%Y %H:%M"), as.POSIXct(data$Start.Time_pre, format = "%m/%d/%Y %H:%M"), units = "mins"))
 
 data$test.time.post <- as.numeric(difftime(as.POSIXct(data$End.Time_post, format = "%m/%d/%Y %H:%M"), as.POSIXct(data$Start.Time_post, format = "%m/%d/%Y %H:%M"), units = "mins"))
 ```
 
+### Fixing Carnegie Classification Variable
 
-### Fixing Carnegie Classification Variable ### 
 ```{r}
 data$CarnegieClassification[data$CarnegieClassification == "Baccalaureate Colleges"] <- "Baccalaureate College"
 data$CarnegieClassification <- droplevels(data$CarnegieClassification)
 ```
 
+### Fixing Position Classification
 
-### Fixing Position Classification ###
 ```{r}
 data$position.classification.final <- NA
 data$position.classification.final[data$position.classification == "High School Teacher"] <- "High School"
@@ -2979,8 +2978,8 @@ data$position.classification.final[data$position.classification == "Full time fa
 data$position.classification.final <- as.factor(data$position.classification.final)
 ```
 
+### Advanced Stats Degree
 
-### Advanced Stats Degree ###
 ```{r}
 ### Going to coalesce advanced stats degree with advanced stats degree other ###
 data$advanced.stats.degree.original[data$advanced.stats.degree == ""] <- NA
@@ -3014,8 +3013,8 @@ data$advanced.stats.degree.final[is.na(data$advanced.stats.degree.final) == T] <
 data$advanced.stats.degree.final <- as.factor(data$advanced.stats.degree.final)
 ```
 
+### Fixing Primary New Obtainment
 
-### Fixing Primary New Obtainment ### 
 ```{r}
 data$primary.new.content.obtainment.final <- NA
 data$primary.new.content.obtainment.final[data$primary.new.content.obtainment == "Guided Activity"] <- "Guided Activity"
@@ -3042,8 +3041,8 @@ data$primary.new.content.obtainment.final[data$primary.new.content.obtainment ==
 data$primary.new.content.obtainment.final <- as.factor(data$primary.new.content.obtainment.final)
 ```
 
+### Anonymizing Instructor Name
 
-### Anonymizing Instructor Name ###
 ```{r}
 ### Changes Instructor Name to Number ###
 data$instructor.last.name <- as.character(data$instructor.last.name)
@@ -3090,8 +3089,8 @@ data$InstructorAnonymized_Section_Semester <- paste0(data$instructor.anonymized,
 data$InstructorAnonymized_Section_Semester <- as.factor(data$InstructorAnonymized_Section_Semester)
 ```
 
+### Fixing InstructorName_Section_Semester
 
-### Fixing InstructorName_Section_Semester ###
 ```{r}
 data$InstructorName_Section_Semester2 <- paste0(data$instructor.last.name, "_Section", data$section, "_", 
                                                 data$semester, "_", data$year)
@@ -3099,8 +3098,8 @@ data$InstructorName_Section_Semester2 <- paste0(data$instructor.last.name, "_Sec
 data$InstructorName_Section_Semester2 <- as.factor(data$InstructorName_Section_Semester2)
 ```
 
+### Anonymizing Institution
 
-### Anonymizing Institution ###
 ```{r}
 data$institution <- as.character(data$institution)
 data$institution[data$institution == "Austin Community college"] <- "Austin Community College"
@@ -3119,8 +3118,8 @@ data$institution.anonymized <- mapvalues((data$institution), from = unique(data$
 data$institution.anonymized <- as.factor(data$institution.anonymized)
 ```
 
+### Fixing Carnegie Classification Specific Cases
 
-### Fixing Carnegie Classification Specific Cases ###
 ```{r}
 data$CarnegieClassification <- as.character(data$CarnegieClassification)
 data$CarnegieClassification[data$institution == "Gustavus Adolphus College"] <- "Baccalaureate College"
@@ -3136,16 +3135,16 @@ data$CarnegieClassification[data$institution == "Indian River State College"] <-
 data$CarnegieClassification <- as.factor(data$CarnegieClassification)
 ```
 
+### TA
 
-### TA ###
 ```{r}
 data$TA <- as.character(data$TA)
 data$TA[data$TA == "" | data$TA == " "] <- NA
 data$TA <- as.factor(data$TA)
 ```
 
+### Test Order Pre/Post
 
-### Test Order Pre/Post ###
 ```{r}
 data$Test.Order_pre[data$Test.Order_pre == 2] <- "Attitudes First"
 data$Test.Order_pre[data$Test.Order_pre == 3] <- "Concepts First"
@@ -3159,8 +3158,8 @@ data$Test.Order_post <- as.factor(data$Test.Order_post)
 data$Test.Order_post <- droplevels(data$Test.Order_post)
 ```
 
+### Textbook Classification
 
-### Textbook Classification ###
 ```{r}
 data$textbook.classification <- as.character(data$textbook.classification)
 data$textbook.classification[data$textbook.classification=="ISCAM"] <- "ISCAM"
@@ -3182,9 +3181,8 @@ data$textbook.classification[data$instructor.last.name == "Linton" & data$math.p
 data$textbook.classification <- as.factor(data$textbook.classification)
 ```
 
+### Field_pre/post Renaming
 
-
-### Field_pre/post Renaming ### 
 ```{r}
 data$field_pre_new_final <- mapvalues(data$field_pre, from = c(1:4), 
                                       to = c("Social sciences", "Natural and applied sciences",
@@ -3198,8 +3196,8 @@ data$field_post_new_final <- mapvalues(data$field_post, from = c(1:4),
 data$field_post_new_final <- as.factor(data$field_post_new_final)
 ```
 
+### Grade_expectation_pre/post renaming
 
-### Grade_expectation_pre/post renaming ###
 ```{r}
 data$grade_expectation_pre_final <- mapvalues(data$grade_expectation_pre, from = c(1:13), 
                                               to = c("A+", "A", "A-", "B+", "B", "B-",
@@ -3214,8 +3212,8 @@ data$grade_expectation_post_final <- mapvalues(data$grade_expectation_post, from
 data$grade_expectation_post_final <- as.factor(data$grade_expectation_post_final)
 ```
 
+### Admin.location Fixing
 
-### Admin.location Fixing ###
 ```{r}
 ### PRE ###
 data$admin.pre.location <- as.character(data$admin.pre.location)
@@ -3230,8 +3228,8 @@ data$admin.post.location[is.na(data$admin.post.location) == T] <- NA
 data$admin.post.location <- as.factor(data$admin.post.location)
 ```
 
+### Admin Time
 
-### Admin Time ###
 ```{r}
 ### PRE ###
 data$admin.pre.time <- as.character(data$admin.pre.time)
@@ -3248,8 +3246,8 @@ data$admin.post.time[data$admin.post.time == "Did not give post-test"] <- NA
 data$admin.post.time <- as.factor(data$admin.post.time)
 ```
 
+### Accountability.assignments_none renaming
 
-### Accountability.assignments_none renaming ###
 ```{r}
 data$reading_quiz <- mapvalues(data$accountability.assignements_reading.quiz, 
                                from = c("", "Reading quizzes", "Reading quizzes (section 3)"),
@@ -3272,16 +3270,16 @@ data$graded_lab_activities <- as.factor(data$graded_lab_activities)
 data$graded_lab_activities <- droplevels(data$graded_lab_activities)
 ```
 
+### ISI workshop
 
-### ISI workshop ###
 ```{r}
 data$isi.workshop <- as.character(data$isi.workshop)
 data$isi.workshop[data$isi.workshop == ""] <- NA
 data$isi.workshop <- as.factor(data$isi.workshop)
 ```
 
+### Student Status fixing and renaming
 
-### Student Status fixing and renaming ###
 ```{r}
 data$student_status_pre <- coalesce(data$student_status_pre, data$student_status_post)
 data$status <- coalesce(data$status, data$student_status_pre)
@@ -3294,8 +3292,8 @@ data$status_final <- mapvalues(data$status, from = c(0:8),
 data$status_final <- as.factor(data$status_final)
 ```
 
+### Days meet renaming
 
-### Days meet renaming ### 
 ```{r}
 data$days.meet <- as.character(data$days.meet)
 data$days.meet.final <- NA
@@ -3418,8 +3416,8 @@ data$time.meet.final[data$instructor.last.name == "Quartey" & data$year == "16-1
 data$days.meet.final <- as.factor(data$days.meet.final)
 ```
 
+### Fixing SAT and ACT
 
-### Fixing SAT and ACT ### 
 ```{r}
 data$math_satact_flag <- coalesce(data$math_satact_flag_pre, data$math_satact_flag)
 data$math_satact_flag <- coalesce(data$math_satact_flag, data$math_satact_flag_post)
@@ -3430,14 +3428,14 @@ data$math_satact_flag[data$math_satact_flag == 3] <- NA
 data$math_satact_flag <- as.factor(data$math_satact_flag)
 ```
 
+### Fixing supplemental material
 
-### Fixing supplemental material ### 
 ```{r}
 data$supplemental.textbook <- coalesce(data$supplemental.textbook, data$no.supplemental.textbook)
 ```
 
+### Creating gain_24
 
-### Creating gain_24 ###
 ```{r}
 data$gain_24 <- data$post.perc.24 - data$pre.perc.24
 
@@ -3445,14 +3443,14 @@ data$gain_24 <- data$post.perc.24 - data$pre.perc.24
 data$new_ach_gain <- NA
 ```
 
+### Institution Classification
 
-### Institution Classification ###
 ```{r}
 # levels(data$institution.classification) <-c("", "Community College", "Comprehensive University - a few master's degrees + 4 bachelor's", "Four-Year College", "High School", "Community College", "University (grant advanced degrees)", "University (grant advanced degrees)", "Four-Year College", "Other (Canada)")
 ```
 
+### Specific Anomalies
 
-### Specific Anomalies ###
 ```{r}
 data$advanced.stats.degree.type[data$instructor.last.name == "Fry"] <- "Masters"
 data$advanced.stats.degree.type[data$instructor.last.name == "Obiri"] <- "Masters"
@@ -3635,8 +3633,8 @@ data$percent.lecture.binned[is.na(data$percent.lecture) == T] <- NA
 data$percent.lecture.binned <- as.factor(data$percent.lecture.binned)
 ```
 
+### Subsetting down to final variables
 
-### Subsetting down to final variables ### 
 ```{r}
 data_final <- data %>%
   select(instructor.last.name, instructor.anonymized, section, InstructorName_Section_Semester2, 
@@ -3669,8 +3667,8 @@ data_final <- data %>%
          Affect_change, Cog_change, Difficulty_change, Effort_change, Interest_change, Value_change)
 ```
 
+### Renaming variables in final data set
 
-### Renaming variables in final data set ###
 ```{r}
 data_final$firstgen <- as.factor(data_final$firstgen)
 
@@ -3849,16 +3847,16 @@ names(data_final)[names(data_final) == "Q373839_post_c"] <- "q373839.post.c"
 names(data_final)[names(data_final) == "Q4041_post_c"] <- "q4041.post.c"
 ```
 
+### Recalculating Gain Variables in final data set
 
-### Recalculating Gain Variables in final data set ###
 ```{r}
 data_final$gain.33 <- data_final$post.perc.33 - data_final$pre.perc.33
 data_final$ach.gain.33 <- data_final$gain.33 / (1 - data_final$pre.perc.33)
 data_final$ach.gain.24 <- data_final$gain.24 / (1 - data_final$pre.perc.24)
 ```
 
+### Changing Percent Corrects from Proportions to Percents
 
-### Changing Percent Corrects from Proportions to Percents ###
 ```{r}
 data_final$pre.perc.24 <- 100 * data_final$pre.perc.24
 data_final$post.perc.24 <- 100 * data_final$post.perc.24
@@ -3866,8 +3864,8 @@ data_final$pre.perc.33 <- 100 * data_final$pre.perc.33
 data_final$post.perc.33 <- 100 * data_final$post.perc.33
 ```
 
+### Section Level Variables in final data set
 
-### Section Level Variables in final data set ###
 ```{r}
 detach(package:plyr)
 
@@ -3919,8 +3917,8 @@ data_final <- data_final %>%
   mutate(d = (section.post.perc.24 - section.pre.perc.24) / sqrt((var.pre+var.post)/2))
 ```
 
+### Changing variables to factors
 
-### Changing variables to factors ###
 ```{r}
 data_final$instructor.anonymized <- as.factor(data_final$instructor.anonymized)
 data_final$why.take.pre <- as.factor(data_final$why.take.pre)
@@ -3929,8 +3927,8 @@ data_final$student.type <- as.factor(data_final$student.type)
 data_final$math.satact.flag <- as.factor(data_final$math.satact.flag)
 ```
 
+### Re-ordering Factor Variables
 
-### Re-ordering Factor Variables ###
 ```{r}
 data_final$gaise.familiar <- factor(data_final$gaise.familiar, levels = c(NA, "I am not familiar with GAISE", "Unsure", "Some", "Mostly", "Completely"))
 
@@ -3939,8 +3937,8 @@ data_final$analyzing.data.experience <- factor(data_final$analyzing.data.experie
 data_final$math.prereq <- factor(data_final$math.prereq, levels = c(NA, "None", "High School Algebra", "College Algebra", "Precalculus", "Calculus", "Other"))
 ```
 
+### Writing out Final Data
 
-### Writing out Final Data ###
 ```{r}
 ### Creating Master Data Set ###
 names(data_final)[names(data_final) == "instructor.anonymized"] <- "instructor.a"
@@ -3962,7 +3960,6 @@ names(data_public)[names(data_public) == "institution.a"] <- "institution"
 write.csv(data_public, "Data/All Years Final v3 Public.csv")
 ```
 
-
 ```{r}
 instiution_anonymized_data <- data %>%
   select(institution, institution.anonymized, year) %>%
@@ -3979,7 +3976,6 @@ instructor_anonymized_data <- data %>%
 write.csv(instiution_anonymized_data, "Data/Institution_Name_Anonymized_Data.csv")
 write.csv(instructor_anonymized_data, "Data/Instructor_Name_Anonymized_Data.csv")
 ```
-
 
 ```{r}
 # math_prereq_1415 <- data1415 %>%
@@ -4004,7 +4000,6 @@ write.csv(instructor_anonymized_data, "Data/Instructor_Name_Anonymized_Data.csv"
 # write.csv(institution_carnegie_classification, "institution_carnegie_classification Table.csv")
 ```
 
-
 ```{r}
 # data_final %>%
 #   select(affect.change:value.change, opt.out.pre, opt.out.post, c.rr.pre, c.rr.post, pre.perc.24, post.perc.24, instructor.last.name) %>%
@@ -4021,8 +4016,3 @@ write.csv(instructor_anonymized_data, "Data/Instructor_Name_Anonymized_Data.csv"
 #   filter(math.prereq == "Calculus") %>%
 #   unique()
 ```
-
-
-
-
-

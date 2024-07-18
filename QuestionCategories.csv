@@ -1,0 +1,81 @@
+Question,Overall Category,Specific Category
+6a,attitudes,effort
+6b,attitudes,effort
+6c,attitudes,affect
+6d,attitudes,affect
+6e,attitudes,competence
+6f,attitudes,difficulty
+6g,attitudes,difficulty
+6h,attitudes,difficulty
+6i,attitudes,value
+6j,attitudes,value
+7a,attitudes,competence
+7b,attitudes,interest
+7c,attitudes,value
+7d,attitudes,effort
+7e,attitudes,affect
+7f,attitudes,value
+7g,attitudes,value
+7h,attitudes,affect
+7i,attitudes,affect
+7j,attitudes,interest
+8a,attitudes,value
+8b,attitudes,difficulty
+8c,attitudes,interest
+8d,attitudes,difficulty
+8e,attitudes,value
+8f,attitudes,competence
+8g,attitudes,effort
+8h,attitudes,affect
+8i,attitudes,interest
+8j,attitudes,difficulty
+9a,attitudes,competence
+9b,attitudes,competence
+9c,attitudes,value
+9d,attitudes,difficulty
+9e,attitudes,competence
+9f,attitudes,difficulty
+16,concepts,data collection
+17,concepts,descriptive statistics
+18,concepts,confidence intervals
+19,concepts,confidence intervals
+20,concepts,confidence intervals
+21,concepts,descriptive statistics
+22,concepts,scope of conclusions
+23,concepts,significance
+24,concepts,significance
+25,concepts,scope of conclusions
+26,concepts,confidence intervals
+27,concepts,significance
+28,concepts,significance
+29,concepts,significance
+30,concepts,significance
+31,concepts,significance
+32,concepts,descriptive statistics
+33,concepts,descriptive statistics
+34,concepts,simulation
+35,concepts,simulation
+36,concepts,descriptive statistics
+37,concepts,simulation
+38,concepts,simulation
+39,concepts,simulation
+40,concepts,descriptive statistics
+41,concepts,descriptive statistics
+42,concepts,data collection
+43,concepts,significance
+44,concepts,significance
+45,concepts,confidence intervals
+46,concepts,confidence intervals
+47,concepts,significance
+48,demographics,gender
+49,demographics,age
+50,demographics,first gen
+51,demographics,race
+52,demographics,prior statistics
+53,demographics,status
+54,demographics,primary interest
+55,demographics,gpa
+56,demographics,SAT ACT
+57,demographics,SAT
+58,demographics,ACT
+59,demographics,grade

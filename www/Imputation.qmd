@@ -1,0 +1,45 @@
+---
+title: "Imputation"
+subtitle: "[What is imputation?](https://en.wikipedia.org/wiki/Imputation_(statistics)#:~:text=In%20statistics%2C%20imputation%20is%20the,known%20as%20%22item%20imputation%22.)"
+format: html
+---
+
+Variables that will be imputed:
+
+-   math.perf.pre
+-   math.perf.post
+-   math.comp.pre
+-   math.comp.post
+-   stats.career.usage.pre
+-   stats.career.usage.post
+-   mastering.confidence.pre
+-   mastering.confidence.post
+-   choice.likelihood.pre
+-   choice.likelihood.post
+-   why.take.pre
+-   why.take.post
+-   is.major.course
+-   field.major
+-   gpa
+-   grade.expectation.pre
+-   grade.expectation.post
+-   gender
+-   age
+-   has.taken.stat.course
+-   prev.stat.course
+-   status
+-   institution
+-   affect.pre
+-   affect.post
+-   cognitive.competence.pre
+-   cognitive.competence.post
+-   difficulty.pre
+-   difficulty.post
+-   effort.pre
+-   effort.post
+-   interest.pre
+-   interest.post
+-   value.pre
+-   value.post
+-   math.satact.flag
+-   satact.zscore

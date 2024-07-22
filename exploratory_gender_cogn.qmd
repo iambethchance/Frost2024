@@ -16,6 +16,7 @@ embed-resources: true
 
 library(readr)
 library(tidyverse)
+load(url("http://www.rossmanchance.com/iscam3/ISCAM.RData"))
 ```
 
 ### Loading in data
@@ -291,6 +292,7 @@ BIC(change_ach.fit, pre_ach.fit, post_ach.fit, pre_post_ach.fit)
 
 ## Interactions
 With post-attitude as the response
+
 * cognitive.competence.pre:cognitive.competence.change not significant
 ```{r}
 # lm(y~x1+x2+x1:x2, data=my.data) 
@@ -300,6 +302,7 @@ summary(post_int.fit)
 ```
 
 With achievable gain as the response
+
 * cognitive.competence.pre:cognitive.competence.change not significant
 ```{r}
 # lm(y~x1+x2+x1:x2, data=my.data) 
@@ -307,3 +310,5 @@ ach_int1.fit <- lm(ach.gain.24 ~ cognitive.competence.pre+cognitive.competence.c
 
 summary(ach_int1.fit)
 ```
+
+

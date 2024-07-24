@@ -331,7 +331,7 @@ server <- function(input, output, session) {
   
   
   # allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
-  allYrsFinal <- read.csv("All Years Final Public.csv", stringsAsFactors = TRUE)
+  allYrsFinal <- read.csv("FinalFiles2021/All Years Final Public.csv", stringsAsFactors = TRUE)
   filteredData <- reactive({
     filteredData <- allYrsFinal
     

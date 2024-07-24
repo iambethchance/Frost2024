@@ -16,6 +16,8 @@ embed-resources: true
 
 library(readr)
 library(tidyverse)
+library(broom)
+library(corrplot)
 load(url("http://www.rossmanchance.com/iscam3/ISCAM.RData"))
 ```
 
@@ -83,7 +85,7 @@ allYrsFinal|>
 t.test(allYrsFinal$cognitive.competence.change ~ allYrsFinal$gender)
 ```
 
-## By Question t-tests
+## By Question 
 Post:
 
 -   6e: I had trouble understanding statistics because of how I think.
@@ -98,7 +100,7 @@ Post:
 
 -   9e: I found it difficult to understand statistical concepts.
 
-t-tests per question:
+### t-tests per question:
 ```{r}
 competence <- c("^q6e", "^q7a", "^q8f", "^q9a", "^q9b", "^q9e")
 
@@ -117,12 +119,12 @@ t_test_results
 
 ```
 
-## Per Question Visuals
+### Per Question Visuals
 ```{r}
 competenceFull <- c("q6e.pre.a", "q6e.post.a", "q7a.pre.a", "q7a.post.a", "q8f.pre.a", "q8f.post.a", "q9a.pre.a", "q9a.post.a", "q9b.pre.a", "q9b.post.a", "q9e.pre.a", "q9e.post.a")
 
 questions_long <- allYrsFinal |>
-  select(all_of(competenceFull), gender) |>
+  select(all_of(competenceFull), gender, ach.gain.24) |>
   pivot_longer(cols=all_of(competenceFull),
                names_to = "question",
                values_to = "score")
@@ -159,7 +161,7 @@ questions_long|>
 
 
 ```
-Change Per Question by Gender
+Change Per Question by Gender Boxplots
 ```{r}
 questions_long <- questions_long |>
   mutate(row_id = row_number())
@@ -177,8 +179,98 @@ questions_change <- questions_wide |>
 questions_change|>
   ggplot(aes(x=question_num, y=change, color = gender)) + geom_boxplot() 
 ```
+Change Per Question by Gender Line Graph
+```{r}
+questions_change|>
+  mutate(question_num = factor(question_num, levels = unique(question_num))) |>
+  group_by(gender, question_num) |>
+  summarize(mean_change = mean(change)) |>
+  ungroup() |>
+  ggplot(aes(x=question_num, y=mean_change, color = gender, group = gender)) +
+    geom_line() 
+```
+
+``## What questions are good predictors for achievable gain?
+All questions
+Check assumptions
+```{r}
+
+questions_ach_gain.fit <- lm(ach.gain.24 ~ q6e.pre.a+q6e.post.a + q7a.pre.a + q7a.post.a + q8f.pre.a + q8f.post.a + q9a.pre.a + q9a.post.a + q9b.pre.a + q9b.post.a + q9e.pre.a + q9e.post.a, data=allYrsFinal)
+
+questions_ach_gain.aug <- augment(questions_ach_gain.fit, newdata = allYrsFinal)
+
+# residuals vs fitted - looks ok? some fanning?
+plot(resid(questions_ach_gain.fit) ~ fitted(questions_ach_gain.fit), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+
+# qq plot - outliers, left tail concerning
+qqnorm(resid(questions_ach_gain.fit), ylab="Residuals"); qqline(resid(questions_ach_gain.fit), lty = "dashed")
+
+# histogram of residuals - skewed left
+hist(resid(questions_ach_gain.fit), main = '', col="olivedrab", xlab = "Residuals")
+par(mfrow=c(1,1))
+
+```
+
+Transforming the data
+```{r}
+# normality violated => transform y 
+# skewed left => move up ladder of powers
+# y^2
+
+questions_ach_gain.fit2 <- lm(sqrt(ach.gain.24) ~ q6e.pre.a+q6e.post.a + q7a.pre.a + q7a.post.a + q8f.pre.a + q8f.post.a + q9a.pre.a + q9a.post.a + q9b.pre.a + q9b.post.a + q9e.pre.a + q9e.post.a, data=allYrsFinal)
+
+plot(resid(questions_ach_gain.fit2) ~ fitted(questions_ach_gain.fit2), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+
+# qq plot - outliers
+qqnorm(resid(questions_ach_gain.fit2), ylab="Residuals"); qqline(resid(questions_ach_gain.fit), lty = "dashed")
+
+# histogram of residuals 
+hist(resid(questions_ach_gain.fit2), main = '', col="olivedrab", xlab = "Residuals")
+par(mfrow=c(1,1))
+```
+
+```{r}
+summary(questions_ach_gain.fit2)
+```
+```{r}
+anova(questions_ach_gain.fit2)
+```
+```{r}
+car::Anova(questions_ach_gain.fit2)
+```
 
 
+### Correlation Matrices
+For all questions
+```{r}
+questions_only <- allYrsFinal|>
+  select(all_of(competenceFull))|>
+  drop_na()
+cor(questions_only)
+corrplot(cor(questions_only))
+```
+
+For pre questions
+```{r}
+pre_only <- allYrsFinal|>
+  select(all_of(competenceFull))|>
+  select(ends_with("pre.a")) |>
+  drop_na()
+cor(pre_only)
+corrplot(cor(pre_only))
+```
+
+For post questions
+```{r}
+post_only <- allYrsFinal|>
+  select(all_of(competenceFull))|>
+  select(ends_with("post.a")) |>
+  drop_na()
+cor(post_only)
+corrplot(cor(post_only))
+```
 
 ## Where there are "other" or "don't want to answer" for the gender question
 
@@ -238,77 +330,414 @@ overall max : 7
 max(allYrsFinal$cognitive.competence.pre)
 ```
 
-## Is change in attitude is a better predictor of achievable than the actual attitude? 
+## Is change in attitude is a better predictor of achievable gain than the actual attitude?
 
-Change in attitude
-* change in attitudes is a significant predictor of achievable gain
-* adj R^2 = 0.01189
-* rmse = 0.2702
+### Change in attitude
+Check Assumptions
 ```{r}
 change_ach.fit <- lm(ach.gain.24 ~ cognitive.competence.change, data = allYrsFinal)
 
-summary(change_ach.fit)
+#par(mfrow=c(2,2))
+
+plot(ach.gain.24~cognitive.competence.change, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted => too much fanning
+plot(resid(change_ach.fit) ~ fitted(change_ach.fit), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(change_ach.fit), ylab="Residuals"); qqline(resid(change_ach.fit), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(change_ach.fit), main = '', col="olivedrab", xlab = "Residuals")
+par(mfrow=c(1,1))
+#summary(change_ach.fit)
+```
+Transform data
+```{r}
+change_ach.fit2 <- lm(ach.gain.24**(1/2) ~ cognitive.competence.change, data = allYrsFinal)
+
+plot(ach.gain.24**(1/2)~cognitive.competence.change, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted => too much fanning
+plot(resid(change_ach.fit2) ~ fitted(change_ach.fit2), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(change_ach.fit2), ylab="Residuals"); qqline(resid(change_ach.fit2), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(change_ach.fit2), main = '', col="olivedrab", xlab = "Residuals")
+par(mfrow=c(1,1))
+```
+```{r}
+summary(change_ach.fit2)
 ```
 
-Actual attitude (pre)
-* pre-attitudes in cognitive competence is a statistically significant predictor of achievable gain
-* adj R^2 = 0.00676
-* rmse = 0.2709
+### Actual attitude (pre)
+Check assummptions
 ```{r}
 pre_ach.fit <- lm(ach.gain.24 ~ cognitive.competence.pre, data = allYrsFinal)
+plot(ach.gain.24~cognitive.competence.pre, data=allYrsFinal, pch=19)
 
-summary(pre_ach.fit)
+#residuals vs. fitted => fanning towards the right
+plot(resid(pre_ach.fit) ~ fitted(pre_ach.fit), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(pre_ach.fit), ylab="Residuals"); qqline(resid(pre_ach.fit), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(pre_ach.fit), main = '', col="olivedrab", xlab = "Residuals")
+par(mfrow=c(1,1))
+
+
+#summary(pre_ach.fit)
 ```
-
-Actual attitude (post)
-* post attitudes in cognitive competence are a significant predictor of achievable gain
-* adj R^2 = 0.03201
-* rmse = 0.2674
+Transformations
 ```{r}
-post_ach.fit <- lm(ach.gain.24 ~ cognitive.competence.post, data = allYrsFinal)
 
-summary(post_ach.fit)
+pre_ach.fit2 <- lm(sqrt(ach.gain.24) ~ cognitive.competence.pre, data = allYrsFinal)
+plot(sqrt(ach.gain.24)~cognitive.competence.pre, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted => fanning towards the right => move y down ladder of powers
+plot(resid(pre_ach.fit2) ~ fitted(pre_ach.fit2), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(pre_ach.fit2), ylab="Residuals"); qqline(resid(pre_ach.fit2), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(pre_ach.fit2), main = '', col="olivedrab", xlab = "Residuals")
+par(mfrow=c(1,1))
+
+```
+```{r}
+summary(pre_ach.fit2)
 ```
 
-Actual attitude (pre AND post)
-* model with pre and post attitudes in cognitive competence is a significant predictor of achievable gain
-* adj R^2 = 0.03194
-* rmse = 0.2675
+
+### Actual attitude (post)
+Checking assumptions
+```{r}
+
+post_ach.fit <- lm(ach.gain.24 ~ cognitive.competence.post, data = allYrsFinal, drop_na())
+
+plot(ach.gain.24~cognitive.competence.post, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted => fanning towards the right
+plot(resid(post_ach.fit ) ~ fitted(post_ach.fit ), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(post_ach.fit), ylab="Residuals"); qqline(resid(post_ach.fit), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(post_ach.fit), main = '', col="olivedrab", xlab = "Residuals")
+par(mfrow=c(1,1))
+
+#summary(post_ach.fit)
+```
+Transformations
+```{r}
+post_ach.fit2 <- lm(sqrt(ach.gain.24) ~ cognitive.competence.post, data = allYrsFinal)
+
+plot(sqrt(ach.gain.24)~cognitive.competence.post, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted => fanning towards the right
+plot(resid(post_ach.fit2) ~ fitted(post_ach.fit2), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(post_ach.fit2), ylab="Residuals"); qqline(resid(post_ach.fit), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(post_ach.fit2), main = '', col="olivedrab", xlab = "Residuals")
+par(mfrow=c(1,1))
+```
+```{r}
+summary(post_ach.fit2)
+```
+
+
+### Actual attitude (pre AND post)
+Check assumptions
 ```{r}
 pre_post_ach.fit <- lm(ach.gain.24 ~ cognitive.competence.post + cognitive.competence.pre, data = allYrsFinal)
 
-summary(pre_post_ach.fit)
+plot(ach.gain.24~cognitive.competence.post + cognitive.competence.pre, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted => fanning towards the right
+plot(resid(pre_post_ach.fit) ~ fitted(pre_post_ach.fit), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(pre_post_ach.fit), ylab="Residuals"); qqline(resid(pre_post_ach.fit), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(pre_post_ach.fit), main = '', col="olivedrab", xlab = "Residuals")
+
 ```
+Transformations
+```{r}
+pre_post_ach.fit2 <- lm(sqrt(ach.gain.24) ~ cognitive.competence.post + cognitive.competence.pre, data = allYrsFinal)
+
+plot(sqrt(ach.gain.24)~cognitive.competence.post + cognitive.competence.pre, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted => fanning towards the right
+plot(resid(pre_post_ach.fit2) ~ fitted(pre_post_ach.fit2), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(pre_post_ach.fit2), ylab="Residuals"); qqline(resid(pre_post_ach.fit2), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(pre_post_ach.fit2), main = '', col="olivedrab", xlab = "Residuals")
+```
+
+
+```{r}
+summary(pre_post_ach.fit2)
+```
+```{r}
+anova(pre_post_ach.fit2)
+```
+```{r}
+car::Anova(pre_post_ach.fit2)
+```
+
 
 ### Comparing the models
-Post-attitudes have the lowest AIC and BIC (best predictor)
+Model with pre and post has the lowest AIC and BIC
 ```{r}
-AIC(change_ach.fit, pre_ach.fit, post_ach.fit, pre_post_ach.fit)
+AIC(change_ach.fit2, pre_ach.fit2, post_ach.fit2, pre_post_ach.fit2)
 ```
 
 ```{r}
-BIC(change_ach.fit, pre_ach.fit, post_ach.fit, pre_post_ach.fit)
+BIC(change_ach.fit2, pre_ach.fit2, post_ach.fit2, pre_post_ach.fit2)
 ```
 
 ## Interactions
-With post-attitude as the response
-
-* cognitive.competence.pre:cognitive.competence.change not significant
+### With post-attitude as the response
+* cognitive.competence.pre:ach.gain.24 significant @ alpha = 0.05
+** as achieveable gain increases, the positive effect of pre cog comp decreases
 ```{r}
 # lm(y~x1+x2+x1:x2, data=my.data) 
-post_int.fit <- lm(cognitive.competence.post ~ cognitive.competence.pre+cognitive.competence.change + cognitive.competence.pre:cognitive.competence.change, data = allYrsFinal)
+post_int.fit <- lm(cognitive.competence.post ~ cognitive.competence.pre+ach.gain.24 + cognitive.competence.pre:ach.gain.24, data = allYrsFinal)
 
 summary(post_int.fit)
 ```
+Plot of cognitive.competence.pre:ach.gain.24 interaction
+```{r}
+lineMin1 <- 2.26201+
+  0.51268*min(allYrsFinal$cognitive.competence.pre) +
+  0.90625*allYrsFinal$ach.gain.24 +
+  -0.07322*min(allYrsFinal$cognitive.competence.pre)*allYrsFinal$ach.gain.24
 
-With achievable gain as the response
+lineMean1 <- 2.26201 +
+  0.51268*mean(allYrsFinal$cognitive.competence.pre) +
+  0.90625*allYrsFinal$ach.gain.24 +
+  -0.07322*mean(allYrsFinal$cognitive.competence.pre)*allYrsFinal$ach.gain.24
 
-* cognitive.competence.pre:cognitive.competence.change not significant
+lineMax1 <- 2.26201 +
+  0.51268*max(allYrsFinal$cognitive.competence.pre) +
+  0.90625*allYrsFinal$ach.gain.24 +
+  -0.07322*max(allYrsFinal$cognitive.competence.pre)*allYrsFinal$ach.gain.24
+
+df1_line1 <- data.frame(ach.gain.24 = allYrsFinal$ach.gain.24, cognitive.competence.post = lineMin1, line = "Min Pre")
+df1_line2 <- data.frame(ach.gain.24 = allYrsFinal$ach.gain.24, cognitive.competence.post = lineMean1, line = "Mean Pre")
+df1_line3 <- data.frame(ach.gain.24 = allYrsFinal$ach.gain.24, cognitive.competence.post = lineMax1, line = "Max Pre")
+
+df1_lines <- rbind(df1_line1, df1_line2, df1_line3)
+
+ggplot(df1_lines, aes(x = ach.gain.24, y = cognitive.competence.post, color = line)) +
+  geom_line() 
+
+```
+
+
+### With achievable gain as the response
+
+* cognitive.competence.pre:cognitive.competence.post significant
+** As post cogn comp increases, negative impact of pre cogn comp decreases (becomes more positive)
+* cognitive.competence.post not significant 
 ```{r}
 # lm(y~x1+x2+x1:x2, data=my.data) 
-ach_int1.fit <- lm(ach.gain.24 ~ cognitive.competence.pre+cognitive.competence.change + cognitive.competence.pre:cognitive.competence.change, data = allYrsFinal)
+ach_int1.fit <- lm(ach.gain.24 ~ cognitive.competence.pre + 
+                     cognitive.competence.post +
+                     cognitive.competence.pre:cognitive.competence.post
+                   , data = allYrsFinal)
 
 summary(ach_int1.fit)
 ```
+Plot of cognitive.competence.pre:cognitive.competence.post interaction
+(Is this correct)?
+```{r}
+# pick typical vals of one variable and plug into get equations for lines
 
+lineMin2 <- 0.047076 + 
+  -0.027312*allYrsFinal$cognitive.competence.pre + 
+  0.018394*min(allYrsFinal$cognitive.competence.post) + 
+  0.005891*min(allYrsFinal$cognitive.competence.post)*allYrsFinal$cognitive.competence.pre
+
+lineMean2 <- 0.047076 + 
+  -0.027312*allYrsFinal$cognitive.competence.pre + 0.018394*mean(allYrsFinal$cognitive.competence.post) +
+   0.005891*mean(allYrsFinal$cognitive.competence.post)*allYrsFinal$cognitive.competence.pre
+
+lineMax2 <- 0.047076 +  -0.027312*allYrsFinal$cognitive.competence.pre + 0.018394*mean(allYrsFinal$cognitive.competence.post) + 
+  0.005891*max(allYrsFinal$cognitive.competence.post)*allYrsFinal$cognitive.competence.pre
+
+df2_line1 <- data.frame(cognitive.competence.pre = allYrsFinal$cognitive.competence.pre, ach.gain.24 = lineMin2, line = "Min Post")
+df2_line2 <- data.frame(cognitive.competence.pre = allYrsFinal$cognitive.competence.pre, ach.gain.24 = lineMean2, line = "Mean Post")
+df2_line3 <- data.frame(cognitive.competence.pre = allYrsFinal$cognitive.competence.pre, ach.gain.24 = lineMax2, line = "Max Post")
+
+df2_lines <- rbind(df2_line1, df2_line2, df2_line3)
+
+ggplot(df2_lines, aes(x = cognitive.competence.pre, y = ach.gain.24, color = line)) +
+  geom_line() 
+
+```
+
+## Any differences depending on textbooks or instructor gender + any other variables + interactions to investigate?
+
+### Instructor gender
+Differences in post based on instructor gender?
+t-test (not significant)
+```{r}
+t.test(allYrsFinal$cognitive.competence.post ~ allYrsFinal$instructor.gender)
+```
+
+Differences in change based on instructor gender?
+t-test (not significant)
+```{r}
+t.test(allYrsFinal$cognitive.competence.change ~ allYrsFinal$instructor.gender)
+```
+For female students, does instructor gender matter in change?
+t-test (not significant)
+```{r}
+onlyFemStudents <- allYrsFinal |>
+  filter(gender == "Female") 
+
+t.test(onlyFemStudents$cognitive.competence.change ~ onlyFemStudents$instructor.gender)
+```
+
+For male students, does instructor gender matter in change?
+t-test (not significant)
+```{r}
+onlyMaleStudents <- allYrsFinal |>
+  filter(gender == "Male") 
+
+t.test(onlyMaleStudents$cognitive.competence.change ~ onlyMaleStudents$instructor.gender)
+```
+
+### Textbook Classification vs Ach Gain
+```{r}
+unique(allYrsFinal$textbook.classification)
+```
+
+Check assumptions
+```{r}
+text_class.fit <- lm(ach.gain.24 ~ textbook.classification, data=allYrsFinal)
+#plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted 
+plot(resid(text_class.fit) ~ fitted(text_class.fit), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(text_class.fit), ylab="Residuals"); qqline(resid(text_class.fit), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(text_class.fit), main = '', col="olivedrab", xlab = "Residuals")
+
+```
+Transformations
+```{r}
+text_class.fit2 <- lm(sqrt(ach.gain.24) ~ textbook.classification, data=allYrsFinal)
+#plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted 
+plot(resid(text_class.fit2) ~ fitted(text_class.fit2), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(text_class.fit2), ylab="Residuals"); qqline(resid(text_class.fit2), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(text_class.fit2), main = '', col="olivedrab", xlab = "Residuals")
+
+```
+```{r}
+summary(text_class.fit2)
+```
+
+### Textbook Classification vs Cog Comp Post 
+Check assumptions (bimodal residuals?)
+```{r}
+text_class_post.fit <- lm(cognitive.competence.post ~ textbook.classification, data=allYrsFinal)
+#plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted 
+plot(resid(text_class_post.fit) ~ fitted(text_class_post.fit), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(text_class_post.fit), ylab="Residuals"); qqline(resid(text_class_post.fit), lty = "dashed")
+#histogram of residuals=> skewed left and bimodal
+hist(resid(text_class_post.fit), main = '', col="olivedrab", xlab = "Residuals")
+
+```
+
+### Individual Textbooks vs Ach Gain
+```{r}
+unique(allYrsFinal$textbook.used)
+```
+
+Check assumptions
+```{r}
+textbook.fit <- lm(ach.gain.24 ~ textbook.used, data=allYrsFinal)
+#plot(ach.gain.24~textbook.used, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted 
+plot(resid(textbook.fit) ~ fitted(textbook.fit), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(textbook.fit), ylab="Residuals"); qqline(resid(textbook.fit), lty = "dashed")
+#histogram of residuals=> slightly skewed left
+hist(resid(textbook.fit), main = '', col="olivedrab", xlab = "Residuals")
+
+```
+Transformations
+```{r}
+textbook.fit2 <- lm(sqrt(ach.gain.24) ~ textbook.used, data=allYrsFinal)
+#plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted 
+plot(resid(textbook.fit2) ~ fitted(textbook.fit2), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(textbook.fit2), ylab="Residuals"); qqline(resid(textbook.fit2), lty = "dashed")
+#histogram of residuals=> slightly skewed left
+hist(resid(textbook.fit2), main = '', col="olivedrab", xlab = "Residuals")
+
+```
+```{r}
+#summary(textbook.fit2)
+```
+```{r}
+anova(textbook.fit2)
+```
+
+### Textbook Used vs Cog Comp Post 
+Check assumptions (bimodal residuals?)
+```{r}
+textbook_post.fit <- lm(cognitive.competence.post ~ textbook.used, data=allYrsFinal)
+#plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted 
+plot(resid(textbook_post.fit) ~ fitted(textbook_post.fit), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(textbook_post.fit), ylab="Residuals"); qqline(resid(textbook_post.fit), lty = "dashed")
+#histogram of residuals=> skewed left and bimodal
+hist(resid(textbook_post.fit), main = '', col="olivedrab", xlab = "Residuals")
+
+```
+Transformations
+```{r}
+
+textbook_post.fit2 <- lm(cognitive.competence.post**1.5 ~ textbook.used, data=allYrsFinal)
+#plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
+
+#residuals vs. fitted 
+plot(resid(textbook_post.fit2) ~ fitted(textbook_post.fit2), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(textbook_post.fit2), ylab="Residuals"); qqline(resid(textbook_post.fit2), lty = "dashed")
+#histogram of residuals=> skewed left and bimodal
+hist(resid(textbook_post.fit2), main = '', col="olivedrab", xlab = "Residuals")
+
+```
+```{r}
+anova(textbook_post.fit2)
+```
 

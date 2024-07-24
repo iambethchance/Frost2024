@@ -1,6 +1,6 @@
 ---
 title: "Imputation"
-subtitle: "[What is imputation?](https://en.wikipedia.org/wiki/Imputation_(statistics)#:~:text=In%20statistics%2C%20imputation%20is%20the,known%20as%20%22item%20imputation%22.)"
+subtitle: "[What is imputation?](https://en.wikipedia.org/wiki/Imputation_(statistics)){target=_blank}"
 format: html
 ---
 

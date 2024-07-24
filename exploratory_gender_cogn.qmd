@@ -1,21 +1,28 @@
 ---
 title: "Exploratory analysis: gender and cognitive competence"
-format: html
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
 editor: visual
+embed-resources: true
 ---
 
+### Attatching packages
 ```{r}
-# packages
-library(dplyr)
+#| message: false
+
 library(readr)
+library(tidyverse)
 ```
 
+### Loading in data
 ```{r}
-# data
+#| message: false
 allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
 ```
 
-Gender and Pre boxplot
+### Gender and Pre violin plot
 
 ```{r}
 #cognitive.competence.pre	cognitive.competence.post
@@ -24,43 +31,44 @@ Gender and Pre boxplot
 allYrsFinal|>
   #filter(!is.na(gender), !is.na(cognitive.competence.pre)) |>
   ggplot(aes(x=gender, y=cognitive.competence.pre)) + 
-  geom_boxplot()
+  geom_boxplot() + geom_violin(alpha = 0.5, color = "orchid")
 ```
 
-Gender and Pre t-test
+### Gender and Pre t-test
 
 ```{r}
 t.test(allYrsFinal$cognitive.competence.pre ~ allYrsFinal$gender)
 ```
 
-Gender and Post boxplot
+### Gender and Post boxplot
 
 ```{r}
 allYrsFinal|>
   #filter(!is.na(gender), !is.na(cognitive.competence.post)) |>
   ggplot(aes(x=gender, y=cognitive.competence.post)) + 
-  geom_boxplot()
+  geom_boxplot() + geom_violin(alpha = 0.5, color="orchid")
 ```
 
-Gender and Post t-test
+### Gender and Post t-test
 
 ```{r}
 t.test(allYrsFinal$cognitive.competence.post ~ allYrsFinal$gender)
 ```
 
-Gender and Change boxplot
-
+### Gender and Change boxplot
 ```{r}
 allYrsFinal|>
   #filter(!is.na(gender), !is.na(cognitive.competence.change)) |>
   ggplot(aes(x=gender, y=cognitive.competence.change)) + 
-  geom_boxplot()
+  geom_boxplot() + geom_violin(alpha = 0.5, color = "orchid")
 ```
 
+### Gender and Change t-test
 ```{r}
 t.test(allYrsFinal$cognitive.competence.change ~ allYrsFinal$gender)
 ```
 
+## By Question:
 Post:
 
 -   6e: I had trouble understanding statistics because of how I think.
@@ -75,24 +83,18 @@ Post:
 
 -   9e: I found it difficult to understand statistical concepts.
 
+t-tests per question:
 ```{r}
-# Define the patterns to search for
 competence <- c("^q6e", "^q7a", "^q8f", "^q9a", "^q9b", "^q9e")
 
-# Initialize an empty list to store the t-test results
 t_test_results <- list()
 
-# Loop through each pattern
 for (pattern in competence) {
-  # Find the column names that match the pattern
   matched_columns <- grep(pattern, colnames(allYrsFinal), value = TRUE)
   
-  # Loop through each matched column and perform a t-test
   for (column in matched_columns) {
-    # Perform the t-test
     t_test_result <- t.test(allYrsFinal[[column]] ~ allYrsFinal$gender)
     
-    # Store the result in the list with the column name as the key
     t_test_results[[column]] <- t_test_result
   }
 }
@@ -100,30 +102,47 @@ t_test_results
 
 ```
 
+Per Question Visuals
 ```{r}
+competenceFull <- c("q6e.pre.a", "q6e.post.a", "q7a.pre.a", "q7a.post.a", "q8f.pre.a", "q8f.post.a", "q9a.pre.a", "q9a.post.a", "q9b.pre.a", "q9b.post.a", "q9e.pre.a", "q9e.post.a")
 
-# Initialize an empty list to store the t-test results
-wilcox_results <- list()
-
-# Loop through each pattern
-for (pattern in competence) {
-  # Find the column names that match the pattern
-  matched_columns <- grep(pattern, colnames(allYrsFinal), value = TRUE)
-  
-  # Loop through each matched column and perform a t-test
-  for (column in matched_columns) {
-    # Perform the t-test
-    wilcox_result <- wilcox.test(allYrsFinal[[column]] ~ allYrsFinal$gender)
-    
-    # Store the result in the list with the column name as the key
-    wilcox_results[[column]] <- wilcox_result
-  }
-}
-wilcox_results
-
+questions_long <- allYrsFinal |>
+  select(all_of(competenceFull), gender) |>
+  pivot_longer(cols=all_of(competenceFull),
+               names_to = "question",
+               values_to = "score")
+```
+Pre Questions By Gender Boxplots
+```{r}
+questions_long|>
+  group_by(gender)|>
+  filter(str_detect(question, "pre")) |>
+  ggplot(aes(x=question, y = score, color = gender)) + geom_boxplot() 
 ```
 
-Where there are "other" or "don't want to answer" for the gender question
+Post Questions by Gender Boxplots
+```{r}
+questions_long|>
+  group_by(gender)|>
+  filter(str_detect(question, "post")) |>
+  ggplot(aes(x=question, y = score, color = gender)) + geom_boxplot() 
+```
+
+Pre vs. Post Faceted by Gender
+```{r}
+questions_long |>
+  mutate(preOrPost = case_when(str_detect(question, "pre") ~ "pre",
+                               str_detect(question, "post") ~ "post"),
+         question_num = str_extract(question, "q\\d+[a-z]"))|>
+  group_by(preOrPost) |>
+  ggplot(aes(x=question, y= score, color = preOrPost)) + 
+  geom_boxplot() +
+  facet_grid(.~gender) +
+  scale_x_discrete(labels = function(x) str_extract(x, "\\d+[a-z]"))
+```
+
+
+## Where there are "other" or "don't want to answer" for the gender question
 
 ```{r}
 unique(allYrsFinal$gender)
@@ -132,6 +151,7 @@ allYrsFinal|>
   filter(is.na(gender))
 ```
 
+### Mean pre cog comp by gender
 ```{r}
 # note: NAs have the lowest pre and post cognitive competence, and have the greatest decrease in cognitive competence
 allYrsFinal|>
@@ -139,16 +159,96 @@ allYrsFinal|>
   summarize(mean(cognitive.competence.pre))
 ```
 
+### Mean post cog comp by gender
 ```{r}
 allYrsFinal|>
   group_by(gender)|>
   summarize(mean(cognitive.competence.post))
 ```
 
+### Mean change cog comp by gender
 ```{r}
 allYrsFinal|>
   group_by(gender)|>
   summarize(mean(cognitive.competence.change))
 ```
 
+### How much do individual questions differ in terms of mean female - mean male to other ones within cog comp?
+```{r}
+competence <- c("^q6e", "^q7a", "^q8f", "^q9a", "^q9b", "^q9e")
+competenceFull <- c("q6e.pre.a", "q6e.post.a", "q7a.pre.a", "q7a.post.a", "q8f.pre.a", "q8f.post.a", "q9a.pre.a", "q9a.post.a", "q9b.pre.a", "q9b.post.a", "q9e.pre.a", "q9e.post.a")
+#competenceFull
+qDiffsGender <- list()
+for (q in competenceFull) {
+  q <- sym(q)
+  question <- allYrsFinal|>
+    group_by(gender)|>
+    filter(!is.na(!!q))|>
+    summarize(mean(!!q))
+  qDiffsGender[[q]] <- question[[1,2]] - question[[2,2]]
+}
+
+#questionDiffs
+
+qDiffsGender_df <- enframe(unlist(qDiffsGender), name = "question", value = "diff")
+qDiffsGender_df
+```
+
+## "Max Possible Score" on cogcomp.pre
+overall max : 7
+```{r}
+max(allYrsFinal$cognitive.competence.pre)
+```
+
+## Is change in attitude is a better predictor of achievable than the actual attitude? 
+
+Change in attitude
+* change in attitudes is a significant predictor of achievable gain
+* adj R^2 = 0.01189
+* rmse = 0.2702
+```{r}
+change_ach.fit <- lm(ach.gain.24 ~ cognitive.competence.change, data = allYrsFinal)
+
+summary(change_ach.fit)
+```
+
+Actual attitude (pre)
+* pre-attitudes in cognitive competence is a statistically significant predictor of achievable gain
+* adj R^2 = 0.00676
+* rmse = 0.2709
+```{r}
+pre_ach.fit <- lm(ach.gain.24 ~ cognitive.competence.pre, data = allYrsFinal)
+
+summary(pre_ach.fit)
+```
+
+Actual attitude (post)
+* post attitudes in cognitive competence are a significant predictor of achievable gain
+* adj R^2 = 0.03201
+* rmse = 0.2674
+```{r}
+post_ach.fit <- lm(ach.gain.24 ~ cognitive.competence.post, data = allYrsFinal)
+
+summary(post_ach.fit)
+```
+
+Actual attitude (pre AND post)
+* model with pre and post attitudes in cognitive competence is a significant predictor of achievable gain
+* adj R^2 = 0.03194
+* rmse = 0.2675
+```{r}
+pre_post_ach.fit <- lm(ach.gain.24 ~ cognitive.competence.post + cognitive.competence.pre, data = allYrsFinal)
+
+summary(pre_post_ach.fit)
+```
+
+### Comparing the models
+Post-attitudes have the lowest AIC and BIC (best predictor)
+```{r}
+AIC(change_ach.fit, pre_ach.fit, post_ach.fit, pre_post_ach.fit)
+```
+
+```{r}
+BIC(change_ach.fit, pre_ach.fit, post_ach.fit, pre_post_ach.fit)
+```
 

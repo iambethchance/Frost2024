@@ -120,11 +120,11 @@ ui <- fluidPage(
                         "Original answers"),
             selected = "Original answers"),
     radioButtons("imputation",
-             label = HTML('<a href="Imputation.html" target="_blank">Impute missing values?</a>', "<br>(may take several minutes)"),
+             label = HTML('<a href="Imputation.html" target="_blank">Impute</a>', "missing values?<br>(may take several minutes)"),
              choices = c("Yes", "No"),
              selected = "No"),
     radioButtons("section_vars",
-             label = "Create section-level variables?",
+             label = HTML(paste0("Create ", '<a href="SectionVars.html" target="_blank">section-level variables</a>', "?")),
              choices = c("Yes", "No"),
              selected = "Yes")
   ),
@@ -337,7 +337,7 @@ server <- function(input, output, session) {
   })
   
   output$section_vars <- renderUI({
-    HTML(paste("Create section variables:", input$section_vars), "<br><br>")
+    HTML(paste("Create section-level variables:", input$section_vars), "<br><br>")
   })
   
   

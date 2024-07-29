@@ -6,6 +6,8 @@ library(Amelia)
 
 pdf_location <- "FinalFiles2023/WinterSpring2017PostTestAnnotated.pdf"
 addResourcePath("pdfs", dirname(pdf_location))
+docx_location <- "FinalFiles2023/CodeBook2021.docx"
+addResourcePath("docx", dirname(docx_location))
 
 ui <- fluidPage(
   titlePanel("Subsetting data"),
@@ -120,7 +122,11 @@ ui <- fluidPage(
     radioButtons("imputation",
              label = HTML('<a href="Imputation.html" target="_blank">Impute missing values?</a>', "<br>(may take several minutes)"),
              choices = c("Yes", "No"),
-             selected = "No")
+             selected = "No"),
+    radioButtons("section_vars",
+             label = "Create section-level variables?",
+             choices = c("Yes", "No"),
+             selected = "Yes")
   ),
   mainPanel(
     textOutput("year"),
@@ -134,7 +140,8 @@ ui <- fluidPage(
     # textOutput("section_rr"),
     uiOutput("overall_category"),
     textOutput("right_wrong"),
-    uiOutput("imputation"),
+    textOutput("imputation"),
+    uiOutput("section_vars"),
     downloadButton("downloadData", "Download"),
     uiOutput("dt_heading"),
     tableOutput("data_table")
@@ -325,8 +332,12 @@ server <- function(input, output, session) {
     paste("Type of student responses:", input$right_wrong)
   })
   
-  output$imputation <- renderUI({
-    HTML(paste("Impute missing values:", input$imputation), "<br><br>")
+  output$imputation <- renderText({
+    paste("Impute missing values:", input$imputation)
+  })
+  
+  output$section_vars <- renderUI({
+    HTML(paste("Create section variables:", input$section_vars), "<br><br>")
   })
   
   
@@ -510,38 +521,38 @@ server <- function(input, output, session) {
       data_imputed$answered.both[data_imputed$pre.perc.24 == 0 | data_imputed$post.perc.24 == 0] <- 0
 
 
-      data_imputed <- data_imputed |>
-        group_by(instructor.section, year) |>
-        mutate(#section.num.responded = n(),
-               add_count(name = section.num.responded),
-               section.pre.responded = sum(answered.pre, na.rm = T),
-               section.post.responded = sum(answered.post, na.rm = T),
-               section.both.responded = sum(answered.both, na.rm = T),
-               section.c.rr = section.both.responded/class.size.start,
-               section.ach.gain.24 = mean(ach.gain.24, na.rm = T),
-               section.pre.perc.24 = mean(pre.perc.24, na.rm = T),
-               section.post.perc.24 = mean(post.perc.24, na.rm = T),
-               section.gpa = mean(gpa, na.rm = T),
-               section.satact.zscore = mean(satact.zscore, na.rm = T),
-               section.affect.pre = mean(affect.pre, na.rm = T),
-               section.affect.post = mean(affect.post, na.rm = T),
-               section.cognitive.competence.pre = mean(cognitive.competence.pre, na.rm = T),
-               section.cognitive.competence.post = mean(cognitive.competence.post, na.rm = T),
-               section.difficulty.pre = mean(difficulty.pre, na.rm = T),
-               section.difficulty.post = mean(difficulty.post, na.rm = T),
-               section.effort.pre = mean(effort.pre, na.rm = T),
-               section.effort.post = mean(effort.post, na.rm = T),
-               section.interest.pre = mean(interest.pre, na.rm = T),
-               section.interest.post = mean(interest.post, na.rm = T),
-               section.value.pre = mean(value.pre, na.rm = T),
-               section.value.post = mean(value.post, na.rm = T),
-               section.overall.attitude.pre = mean(overall.attitude.pre, na.rm = T),
-               section.overall.attitude.post = mean(overall.attitude.post, na.rm = T),
-               var.pre = var(pre.perc.24, na.rm = T),
-               var.post = var(post.perc.24, na.rm = T)
-        ) |>
-        ungroup() |>
-        mutate(d = (section.post.perc.24 - section.pre.perc.24) / sqrt((var.pre+var.post)/2))
+      # data_imputed <- data_imputed |>
+      #   group_by(instructor.section, year) |>
+      #   mutate(#section.num.responded = n(),
+      #          add_count(name = section.num.responded),
+      #          section.pre.responded = sum(answered.pre, na.rm = T),
+      #          section.post.responded = sum(answered.post, na.rm = T),
+      #          section.both.responded = sum(answered.both, na.rm = T),
+      #          section.c.rr = section.both.responded/class.size.start,
+      #          section.ach.gain.24 = mean(ach.gain.24, na.rm = T),
+      #          section.pre.perc.24 = mean(pre.perc.24, na.rm = T),
+      #          section.post.perc.24 = mean(post.perc.24, na.rm = T),
+      #          section.gpa = mean(gpa, na.rm = T),
+      #          section.satact.zscore = mean(satact.zscore, na.rm = T),
+      #          section.affect.pre = mean(affect.pre, na.rm = T),
+      #          section.affect.post = mean(affect.post, na.rm = T),
+      #          section.cognitive.competence.pre = mean(cognitive.competence.pre, na.rm = T),
+      #          section.cognitive.competence.post = mean(cognitive.competence.post, na.rm = T),
+      #          section.difficulty.pre = mean(difficulty.pre, na.rm = T),
+      #          section.difficulty.post = mean(difficulty.post, na.rm = T),
+      #          section.effort.pre = mean(effort.pre, na.rm = T),
+      #          section.effort.post = mean(effort.post, na.rm = T),
+      #          section.interest.pre = mean(interest.pre, na.rm = T),
+      #          section.interest.post = mean(interest.post, na.rm = T),
+      #          section.value.pre = mean(value.pre, na.rm = T),
+      #          section.value.post = mean(value.post, na.rm = T),
+      #          section.overall.attitude.pre = mean(overall.attitude.pre, na.rm = T),
+      #          section.overall.attitude.post = mean(overall.attitude.post, na.rm = T),
+      #          var.pre = var(pre.perc.24, na.rm = T),
+      #          var.post = var(post.perc.24, na.rm = T)
+      #   ) |>
+      #   ungroup() |>
+      #   mutate(d = (section.post.perc.24 - section.pre.perc.24) / sqrt((var.pre+var.post)/2))
       
 # ###
 #       data_imputed <- data_imputed |>
@@ -598,6 +609,43 @@ server <- function(input, output, session) {
       filteredData <- data_imputed
     }
 
+    if (input$section_vars == "Yes") {
+      filteredData <- filteredData |>
+        group_by(instructor.section, year) |>
+        mutate(#section.num.responded = n(),
+          add_count(name = section.num.responded),
+          section.pre.responded = sum(answered.pre, na.rm = T),
+          section.post.responded = sum(answered.post, na.rm = T),
+          section.both.responded = sum(answered.both, na.rm = T),
+          section.c.rr = section.both.responded/class.size.start,
+          section.ach.gain.24 = mean(ach.gain.24, na.rm = T),
+          section.pre.perc.24 = mean(pre.perc.24, na.rm = T),
+          section.post.perc.24 = mean(post.perc.24, na.rm = T),
+          section.gpa = mean(gpa, na.rm = T),
+          section.satact.zscore = mean(satact.zscore, na.rm = T),
+          section.affect.pre = mean(affect.pre, na.rm = T),
+          section.affect.post = mean(affect.post, na.rm = T),
+          section.cognitive.competence.pre = mean(cognitive.competence.pre, na.rm = T),
+          section.cognitive.competence.post = mean(cognitive.competence.post, na.rm = T),
+          section.difficulty.pre = mean(difficulty.pre, na.rm = T),
+          section.difficulty.post = mean(difficulty.post, na.rm = T),
+          section.effort.pre = mean(effort.pre, na.rm = T),
+          section.effort.post = mean(effort.post, na.rm = T),
+          section.interest.pre = mean(interest.pre, na.rm = T),
+          section.interest.post = mean(interest.post, na.rm = T),
+          section.value.pre = mean(value.pre, na.rm = T),
+          section.value.post = mean(value.post, na.rm = T),
+          section.overall.attitude.pre = mean(overall.attitude.pre, na.rm = T),
+          section.overall.attitude.post = mean(overall.attitude.post, na.rm = T),
+          var.pre = var(pre.perc.24, na.rm = T),
+          var.post = var(post.perc.24, na.rm = T)
+        ) |>
+        ungroup() |>
+        mutate(d = (section.post.perc.24 - section.pre.perc.24) / sqrt((var.pre+var.post)/2))
+    } else {
+      filteredData <- filteredData |>
+        select(-starts_with("section."), -starts_with("var."), -d)
+    }
     
     selected_columns <- c()
     
@@ -736,7 +784,7 @@ server <- function(input, output, session) {
   )
   
   output$dt_heading <- renderUI({
-    HTML("<br>Preview of data:")
+    HTML("<br>Preview of data:<br>", '<a href="docx/CodeBook2021.docx" target="_blank">(Code book)</a>')
   })
   
   output$data_table <- renderTable({

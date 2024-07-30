@@ -114,11 +114,11 @@ ui <- fluidPage(
                                   "Scope of Conclusions",
                                   "Significance",
                                   "Simulation"))),
-    selectInput("right_wrong",
-            label = "Type of student responses:",
-            choices = c("Original answers",
-                        "Correct vs. Incorrect"),
-            selected = "Original answers"),
+    # selectInput("right_wrong",
+    #         label = "Type of student responses:",
+    #         choices = c("Original answers",
+    #                     "Correct vs. Incorrect"),
+    #         selected = "Original answers"),
     radioButtons("imputation",
              label = HTML('<a href="Imputation.html" target="_blank">Impute</a>', "missing values?<br>(may take several minutes)"),
              choices = c("Yes", "No"),
@@ -139,7 +139,7 @@ ui <- fluidPage(
     textOutput("class_size"),
     # textOutput("section_rr"),
     uiOutput("overall_category"),
-    textOutput("right_wrong"),
+    # textOutput("right_wrong"),
     textOutput("imputation"),
     uiOutput("section_vars"),
     downloadButton("downloadData", "Download"),
@@ -328,9 +328,10 @@ server <- function(input, output, session) {
     }
     
   })
-  output$right_wrong <- renderText({
-    paste("Type of student responses:", input$right_wrong)
-  })
+  
+  # output$right_wrong <- renderText({
+  #   paste("Type of student responses:", input$right_wrong)
+  # })
   
   output$imputation <- renderText({
     paste("Impute missing values:", input$imputation)
@@ -729,10 +730,10 @@ server <- function(input, output, session) {
                                                      colnames(filteredData), value = TRUE))
       }
       
-      if (input$right_wrong == "Correct vs. Incorrect") {
-        filteredData <- filteredData |>
-          mutate(across(starts_with("q"), ~ if_else(grepl("\\*\\*$", as.character(.)), "correct", "incorrect")))
-      }
+      # if (input$right_wrong == "Correct vs. Incorrect") {
+      #   filteredData <- filteredData |>
+      #     mutate(across(starts_with("q"), ~ ifelse(grepl("\\*\\*$", .), "correct", "incorrect")))
+      # }
     }
     
     if ("Demographics" %in% input$overall_category) {
@@ -747,29 +748,30 @@ server <- function(input, output, session) {
     filteredData <- filteredData |>
       select(all_of(selected_columns))
     
-    if (input$right_wrong == "Correct vs. Incorrect") {
-      concept_columns <- paste(
-        paste(confidence, collapse = "|"),
-        paste(data_collection, collapse = "|"), 
-        paste(descriptive_stats, collapse = "|"),
-        paste(conclusions, collapse = "|"),
-        paste(significance, collapse = "|"),
-        paste(simulation, collapse = "|"),
-      sep = "|")
-      
-      column_names <- names(filteredData)[grep(concept_columns, names(filteredData))]
-      
-      print(names(filteredData))
-      
-      filteredData <- filteredData |>
-        select(matches(concept_columns)) |>
-        #mutate(across(all_of(column_names), ~ if_else(grepl("\\*\\*$", as.character(.)), "correct", "incorrect")))
-        mutate(across(starts_with("q16"), ~ if_else(.x == 1, "correct", "incorrect")),
-               across(all_of(column_names), as.character),
-               across(all_of(column_names), ~ if_else(str_detect(.x, "\\*\\*$"), "correct", "incorrect")))
-      
-      str(filteredData)
-    }
+    # if (input$right_wrong == "Correct vs. Incorrect") {
+    #   # concept_columns <- paste(
+    #   #   paste(confidence, collapse = "|"),
+    #   #   paste(data_collection, collapse = "|"),
+    #   #   paste(descriptive_stats, collapse = "|"),
+    #   #   paste(conclusions, collapse = "|"),
+    #   #   paste(significance, collapse = "|"),
+    #   #   paste(simulation, collapse = "|"),
+    #   # sep = "|")
+    #   # 
+    #   # want_cols <- c(grep(paste(data_collection, collapse = "|"), colnames(filteredData), value = TRUE))
+    # 
+    # #   column_names <- names(filteredData)[grep(concept_columns, names(filteredData))]
+    # 
+    # #   print(names(filteredData))
+    # 
+    # #   filteredData <- filteredData |>
+    # #     #mutate(across(all_of(column_names), ~ if_else(grepl("\\*\\*$", as.character(.)), "correct", "incorrect")))
+    # #     mutate(across(starts_with("q16"), ~ if_else(.x == 1, "correct", "incorrect")),
+    # #            across(all_of(column_names), as.character),
+    # #            across(all_of(column_names), ~ if_else(str_detect(.x, "\\*\\*$"), "correct", "incorrect")))
+    # 
+    # #   str(filteredData)
+    # }
     
     filteredData
   })

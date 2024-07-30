@@ -46,7 +46,6 @@ ul.task-list li input[type="checkbox"] {
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Imputation</h1>
-<p class="subtitle lead"><a href="https://en.wikipedia.org/wiki/Imputation_(statistics)" target="_blank">What is imputation?</a></p>
 </div>
 
 
@@ -63,7 +62,10 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Variables that will be imputed:</p>
+<p>Data is imputed with the <code>amelia()</code> function of the Amelia package. This function performs multiple imputation of multivariate incomplete data using the bootstrap EM algorithm. (<a href="https://www.rdocumentation.org/packages/Amelia/versions/1.8.1/topics/amelia" target="_blank">RDocumentation</a>)<br>
+<br>
+<br>
+Variables that will be imputed:</p>
 <ul>
 <li>math.perf.pre</li>
 <li>math.perf.post</li>

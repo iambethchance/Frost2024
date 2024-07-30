@@ -116,8 +116,8 @@ ui <- fluidPage(
                                   "Simulation"))),
     selectInput("right_wrong",
             label = "Type of student responses:",
-            choices = c("Correct vs. Incorrect",
-                        "Original answers"),
+            choices = c("Original answers",
+                        "Correct vs. Incorrect"),
             selected = "Original answers"),
     radioButtons("imputation",
              label = HTML('<a href="Imputation.html" target="_blank">Impute</a>', "missing values?<br>(may take several minutes)"),
@@ -341,8 +341,8 @@ server <- function(input, output, session) {
   })
   
   
-  # allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
-  allYrsFinal <- read.csv("FinalFiles2021/All Years Final Public.csv", stringsAsFactors = TRUE)
+  allYrsFinal <- read.csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv", stringsAsFactors = TRUE)
+  #allYrsFinal <- read.csv("FinalFiles2021/All Years Final Public.csv", stringsAsFactors = TRUE)
   filteredData <- reactive({
     filteredData <- allYrsFinal
     

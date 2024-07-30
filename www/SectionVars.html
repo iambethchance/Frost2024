@@ -34,6 +34,35 @@ ul.task-list li input[type="checkbox"] {
 <link href="SectionVars_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="SectionVars_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -78,7 +107,7 @@ ul.task-list li input[type="checkbox"] {
 </ul></li>
 <li>section.c.rr
 <ul>
-<li>section.both.responded/class.size.start</li>
+<li><span class="math inline">\(\frac{section.both.responded}{class.size.start}\)</span></li>
 </ul></li>
 <li>section.ach.gain.24
 <ul>
@@ -166,7 +195,7 @@ ul.task-list li input[type="checkbox"] {
 </ul></li>
 <li>d
 <ul>
-<li>(section.post.perc.24 - section.pre.perc.24) / sqrt((var.pre+var.post)/2)</li>
+<li><span class="math inline">\(\frac{\text{section.post.perc.24} - \text{section.pre.perc.24}}{\sqrt{\frac{\text{var.pre}+\text{var.post}}{2}}}\)</span></li>
 </ul></li>
 </ul>
 

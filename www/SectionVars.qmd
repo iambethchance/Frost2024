@@ -11,7 +11,7 @@ format: html
 -   section.both.responded
     -   sum of answered.both
 -   section.c.rr
-    -   section.both.responded/class.size.start
+    -   $\frac{section.both.responded}{class.size.start}$
 -   section.ach.gain.24
     -   mean of ach.gain.24
 -   section.pre.perc.24
@@ -55,4 +55,4 @@ format: html
 -   var.post
     -   variance of post.perc.24
 -   d
-    -   (section.post.perc.24 - section.pre.perc.24) / sqrt((var.pre+var.post)/2)
+    -   $\frac{\text{section.post.perc.24} - \text{section.pre.perc.24}}{\sqrt{\frac{\text{var.pre}+\text{var.post}}{2}}}$

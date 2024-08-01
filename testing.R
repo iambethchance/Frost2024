@@ -3,6 +3,7 @@ library(bslib)
 library(tidyverse)
 library(plyr)
 library(Amelia)
+library(here)
 
 pdf_location <- "FinalFiles2023/WinterSpring2017PostTestAnnotated.pdf"
 addResourcePath("pdfs", dirname(pdf_location))
@@ -342,8 +343,10 @@ server <- function(input, output, session) {
   })
   
   
-  allYrsFinal <- read.csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv", stringsAsFactors = TRUE)
+  #allYrsFinal <- read.csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv", stringsAsFactors = TRUE)
   #allYrsFinal <- read.csv("FinalFiles2021/All Years Final Public.csv", stringsAsFactors = TRUE)
+  # allYrsFinal <- read.csv("All Years Final Public - with Vars.csv", stringsAsFactors = TRUE)
+  allYrsFinal <- read.csv("../../All Years Final Public - with Vars.csv", stringsAsFactors = T)
   filteredData <- reactive({
     filteredData <- allYrsFinal
     
@@ -362,7 +365,7 @@ server <- function(input, output, session) {
                        )),
              # c.rr.pre >= input$response_rate[1], c.rr.pre <= input$response_rate[2],
              # c.rr.post >= input$response_rate[1], c.rr.post <= input$response_rate[2],
-             ach.gain.24 > input$achievable_gain[1], ach.gain.24 < input$achievable_gain[2],
+             ach.gain.24 >= input$achievable_gain[1], #ach.gain.24 < input$achievable_gain[2],
              case_when(
                input$pre_post_tests == "Students who took the pre-test" ~ (is.na(opt.out.pre) == FALSE),
                input$pre_post_tests == "Students who took the post-test" ~ (is.na(opt.out.post) == FALSE),
@@ -645,26 +648,26 @@ server <- function(input, output, session) {
         mutate(d = (section.post.perc.24 - section.pre.perc.24) / sqrt((var.pre+var.post)/2))
     } else {
       filteredData <- filteredData |>
-        select(-starts_with("section."), -starts_with("var."), -d)
+        select(-starts_with("section."), -starts_with("var."), -any_of("d"))
     }
     
     selected_columns <- c()
     
     # attitudes subcategories
-    affect <- c("^q6d", "^q7e", "^q7h", "^q7i", "^q8h")
+    affect <- c("^q6c", "^q6d", "^q7e", "^q7h", "^q7i", "^q8h")
     competence <- c("^q6e", "^q7a", "^q8f", "^q9a", "^q9b", "^q9e")
-    difficulty <- c("^6f", "^q6g", "^q6h", "^8b", "^q8d", "^q8j", "^q9d", "^q9f")
+    difficulty <- c("^q6f", "^q6h", "^q8b", "^q8d", "^q8j", "^q9d", "^q9f")
     effort <- c("^q6a", "^q6b", "^q7d", "^q8g")
     interest <- c("^q7b", "^q7j", "^q8c", "^q8i")
-    value_ <- c("^q6i", "^q6j", "^q7c", "^q7f", "^q7g", "^q8a", "^q8e", "^q9c")
+    value_ <- c("^q6g", "^q6i", "^q6j", "^q7c", "^q7f", "^q7g", "^q8a", "^q8e", "^q9c")
     
     # concepts subcategories
-    confidence <- c("^q1[8-9]\\.","^q20\\.", "^q26\\.", "^q45\\.", "^q46a\\.", "^q46b\\.")
-    data_collection <- c("^q16\\.", "^q42\\.")
-    descriptive_stats <- c("^q17\\.", "^q21\\.", "^q3[2-3]\\.", "^q36\\.", "^q4[0-4]\\.")
-    conclusions <- c("^q22\\.", "^q25\\.")
-    significance <- c("^q2[3-4]\\.", "^q2[7-9]\\.", "^q3[0-1]\\.", "^q4[3-4]\\.", "^q47\\.")
-    simulation <- c("^q3[3-5]\\.", "^q3[7-9]\\.")
+    confidence <- c("^q1[8-9]","^q20", "^q26", "^q45", "^q46")
+    data_collection <- c("^q16", "^q42")
+    descriptive_stats <- c("^q17", "^q21", "^q3[2-3]", "^q36", "^q4[0-4]")
+    conclusions <- c("^q22", "^q25")
+    significance <- c("^q2[3-4]", "^q2[7-9]", "^q3[0-1]", "^q4[3-4]", "^q47")
+    simulation <- c("^q3[3-5]", "^q3[7-9]")
     
     
     if ("Attitudes" %in% input$overall_category) {

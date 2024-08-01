@@ -1,0 +1,31 @@
+---
+title: "Course Textbook Classification"
+format: html
+---
+
+#### ISI
+
+Introduction to Statistical Investigations
+
+#### ISI1st
+
+New instructor to ISI
+
+#### OtherSBI
+
+Other simulation-based inference texts (e.g., Unlocking the Power of Data)
+
+#### NotSBI
+
+Not simulation-based, GAISE compliant
+
+#### NotSBI2
+
+Not GAISE compliant
+
+#### ISCAM
+
+Investigating Statistcal Concepts, Applications, and Methods (calc/pre-calc prerequisite)
+
+
+

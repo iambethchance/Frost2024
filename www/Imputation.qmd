@@ -1,0 +1,49 @@
+---
+title: "Imputation"
+#subtitle: "[What is imputation?](https://en.wikipedia.org/wiki/Imputation_(statistics)){target=_blank}"
+format: html
+---
+
+Data is imputed with the `amelia()` function of the Amelia package. This function performs multiple imputation of multivariate incomplete data using the bootstrap EM algorithm. ([RDocumentation](https://www.rdocumentation.org/packages/Amelia/versions/1.8.1/topics/amelia){target=_blank})
+\
+\
+\
+Variables that will be imputed:
+
+-   math.perf.pre
+-   math.perf.post
+-   math.comp.pre
+-   math.comp.post
+-   stats.career.usage.pre
+-   stats.career.usage.post
+-   mastering.confidence.pre
+-   mastering.confidence.post
+-   choice.likelihood.pre
+-   choice.likelihood.post
+-   why.take.pre
+-   why.take.post
+-   is.major.course
+-   field.major
+-   gpa
+-   grade.expectation.pre
+-   grade.expectation.post
+-   gender
+-   age
+-   has.taken.stat.course
+-   prev.stat.course
+-   status
+-   institution
+-   affect.pre
+-   affect.post
+-   cognitive.competence.pre
+-   cognitive.competence.post
+-   difficulty.pre
+-   difficulty.post
+-   effort.pre
+-   effort.post
+-   interest.pre
+-   interest.post
+-   value.pre
+-   value.post
+-   math.satact.flag
+-   satact.zscore

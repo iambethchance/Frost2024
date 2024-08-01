@@ -1,0 +1,6 @@
+---
+title: "Schools"
+format: html
+---
+
+The Carnegie classification of the student’s institution

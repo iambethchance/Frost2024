@@ -1,0 +1,10 @@
+---
+title: "Achievable Gain"
+format: html
+---
+
+#### How achievable gain was calculated:
+
+$$
+\text{Achievable Gain} = \frac{\text{post test percentage correct} - \text{pre test percentage correct}}{1 - \text{number of test questions}}
+$$

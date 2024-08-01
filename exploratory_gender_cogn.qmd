@@ -24,7 +24,7 @@ load(url("http://www.rossmanchance.com/iscam3/ISCAM.RData"))
 ### Loading in data
 ```{r}
 #| message: false
-allYrsFinal <- read_csv("FinalFiles2023/Data/All Years Final Public - with Vars.csv")
+allYrsFinal <- read_csv("All Years Final Public - with Vars.csv")
 ```
 
 ### Gender and Pre iscamboxplot
@@ -412,8 +412,7 @@ summary(pre_ach.fit2)
 ### Actual attitude (post)
 Checking assumptions
 ```{r}
-
-post_ach.fit <- lm(ach.gain.24 ~ cognitive.competence.post, data = allYrsFinal, drop_na())
+post_ach.fit <- lm(ach.gain.24 ~ cognitive.competence.post, data = allYrsFinal)
 
 plot(ach.gain.24~cognitive.competence.post, data=allYrsFinal, pch=19)
 
@@ -614,6 +613,34 @@ onlyMaleStudents <- allYrsFinal |>
 t.test(onlyMaleStudents$cognitive.competence.change ~ onlyMaleStudents$instructor.gender)
 ```
 
+Is instructor gender a predictor of Post Cog Comp?
+```{r}
+instruct_gender_comp.fit <- lm(cognitive.competence.post ~ instructor.gender + gender + instructor.gender:gender, data = allYrsFinal)
+
+plot(resid(instruct_gender_comp.fit) ~ fitted(instruct_gender_comp.fit), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(instruct_gender_comp.fit), ylab="Residuals"); qqline(resid(instruct_gender_comp.fit), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(instruct_gender_comp.fit), main = '', col="olivedrab", xlab = "Residuals")
+```
+Transformations? (don't know how to fix bimodal)
+```{r}
+instruct_gender_comp.fit2 <- lm((cognitive.competence.post)^1.5 ~ instructor.gender + gender + instructor.gender:gender, data = allYrsFinal)
+
+plot(resid(instruct_gender_comp.fit2) ~ fitted(instruct_gender_comp.fit2), xlab = "Fitted", ylab="Residuals")
+abline(h=0, lty = "dashed")
+#normal Q-Q plot of residuals 
+qqnorm(resid(instruct_gender_comp.fit2), ylab="Residuals"); qqline(resid(instruct_gender_comp.fit2), lty = "dashed")
+#histogram of residuals=> skewed left
+hist(resid(instruct_gender_comp.fit2), main = '', col="olivedrab", xlab = "Residuals")
+```
+Kruskall Wallis
+```{r}
+kruskal.test(cognitive.competence.post ~ instructor.gender, data=allYrsFinal)
+```
+
+
 ### Textbook Classification vs Ach Gain
 ```{r}
 unique(allYrsFinal$textbook.classification)
@@ -621,7 +648,7 @@ unique(allYrsFinal$textbook.classification)
 
 Check assumptions
 ```{r}
-text_class.fit <- lm(ach.gain.24 ~ textbook.classification, data=allYrsFinal)
+text_class.fit <- lm(ach.gain.24 ~ textbook.classification + gender + textbook.classification:gender, data=allYrsFinal)
 #plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
 
 #residuals vs. fitted 
@@ -635,7 +662,7 @@ hist(resid(text_class.fit), main = '', col="olivedrab", xlab = "Residuals")
 ```
 Transformations
 ```{r}
-text_class.fit2 <- lm(sqrt(ach.gain.24) ~ textbook.classification, data=allYrsFinal)
+text_class.fit2 <- lm(sqrt(ach.gain.24) ~ textbook.classification + gender + textbook.classification:gender, data=allYrsFinal)
 #plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
 
 #residuals vs. fitted 
@@ -650,11 +677,15 @@ hist(resid(text_class.fit2), main = '', col="olivedrab", xlab = "Residuals")
 ```{r}
 summary(text_class.fit2)
 ```
+```{r}
+anova(text_class.fit2)
+```
+
 
 ### Textbook Classification vs Cog Comp Post 
 Check assumptions (bimodal residuals?)
 ```{r}
-text_class_post.fit <- lm(cognitive.competence.post ~ textbook.classification, data=allYrsFinal)
+text_class_post.fit <- lm(cognitive.competence.post ~ textbook.classification + gender + textbook.classification:gender, data=allYrsFinal)
 #plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
 
 #residuals vs. fitted 
@@ -674,7 +705,7 @@ unique(allYrsFinal$textbook.used)
 
 Check assumptions
 ```{r}
-textbook.fit <- lm(ach.gain.24 ~ textbook.used, data=allYrsFinal)
+textbook.fit <- lm(ach.gain.24 ~ textbook.used + gender + textbook.used:gender, data=allYrsFinal)
 #plot(ach.gain.24~textbook.used, data=allYrsFinal, pch=19)
 
 #residuals vs. fitted 
@@ -688,7 +719,7 @@ hist(resid(textbook.fit), main = '', col="olivedrab", xlab = "Residuals")
 ```
 Transformations
 ```{r}
-textbook.fit2 <- lm(sqrt(ach.gain.24) ~ textbook.used, data=allYrsFinal)
+textbook.fit2 <- lm(sqrt(ach.gain.24) ~ textbook.used + gender + textbook.used:gender, data=allYrsFinal)
 #plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
 
 #residuals vs. fitted 
@@ -703,6 +734,7 @@ hist(resid(textbook.fit2), main = '', col="olivedrab", xlab = "Residuals")
 ```{r}
 #summary(textbook.fit2)
 ```
+
 ```{r}
 anova(textbook.fit2)
 ```
@@ -710,7 +742,7 @@ anova(textbook.fit2)
 ### Textbook Used vs Cog Comp Post 
 Check assumptions (bimodal residuals?)
 ```{r}
-textbook_post.fit <- lm(cognitive.competence.post ~ textbook.used, data=allYrsFinal)
+textbook_post.fit <- lm(cognitive.competence.post ~ textbook.used + gender + textbook.used:gender, data=allYrsFinal)
 #plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
 
 #residuals vs. fitted 
@@ -725,7 +757,7 @@ hist(resid(textbook_post.fit), main = '', col="olivedrab", xlab = "Residuals")
 Transformations
 ```{r}
 
-textbook_post.fit2 <- lm(cognitive.competence.post**1.5 ~ textbook.used, data=allYrsFinal)
+textbook_post.fit2 <- lm(cognitive.competence.post**1.5 ~ textbook.used + gender + textbook.used:gender, data=allYrsFinal)
 #plot(ach.gain.24~textbook.classification, data=allYrsFinal, pch=19)
 
 #residuals vs. fitted 
@@ -740,4 +772,6 @@ hist(resid(textbook_post.fit2), main = '', col="olivedrab", xlab = "Residuals")
 ```{r}
 anova(textbook_post.fit2)
 ```
+
+
 

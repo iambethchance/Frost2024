@@ -11,6 +11,7 @@ embed-resources: true
 ---
 
 ### Attatching packages
+
 ```{r}
 #| message: false
 library(readr)
@@ -19,27 +20,44 @@ library(broom)
 library(corrplot)
 library(MASS)
 library(nlme)
+library(ggeffects)
+library(RColorBrewer)
 load(url("http://www.rossmanchance.com/iscam3/ISCAM.RData"))
 
 select <- dplyr::select
 ```
 
 ### Loading in data
+
 ```{r}
 #| message: false
-allYrsFinal <- read_csv("All Years Final Public - with Vars.csv")
+allYrsFinal <- read_csv("FinalData/All Years Final Public - with Vars.csv")
+allYrsFinal_NA <- allYrsFinal |>
+  filter(cognitive.competence.pre != 0,
+         cognitive.competence.post != 0)|>
+  mutate(gender = case_when(is.na(gender) ~ "NA/Other",
+                            TRUE~gender))
+
+ allYrsFinal <- allYrsFinal |>
+  filter(cognitive.competence.pre != 0,
+         cognitive.competence.post != 0)
 ```
 
 ## How Many NAs?
+
 ```{r}
 allYrsFinal |>
   group_by(gender)|>
   count()
 ```
 
-## Correlation matrices by gender 
+# Correlation matrices by gender
+
 For pre questions, for women
+
 ```{r}
+competenceFull <- c("q6e.pre.a", "q6e.post.a", "q7a.pre.a", "q7a.post.a", "q8f.pre.a", "q8f.post.a", "q9a.pre.a", "q9a.post.a", "q9b.pre.a", "q9b.post.a", "q9e.pre.a", "q9e.post.a")
+
 pre_only_F <- allYrsFinal|>
   filter(gender == "Female")|>
   select(all_of(competenceFull))|>
@@ -48,7 +66,9 @@ pre_only_F <- allYrsFinal|>
 cor(pre_only_F)
 corrplot(cor(pre_only_F))
 ```
+
 For pre questions, for men
+
 ```{r}
 pre_only_M <- allYrsFinal|>
   filter(gender == "Male")|>
@@ -58,7 +78,9 @@ pre_only_M <- allYrsFinal|>
 cor(pre_only_M)
 corrplot(cor(pre_only_M))
 ```
+
 For pre questions, for NAs
+
 ```{r}
 pre_only_NA <- allYrsFinal|>
   filter(is.na(gender))|>
@@ -70,6 +92,7 @@ corrplot(cor(pre_only_NA))
 ```
 
 For post questions, for women
+
 ```{r}
 post_only_F <- allYrsFinal|>
   filter(gender == "Female")|>
@@ -81,6 +104,7 @@ corrplot(cor(post_only_F))
 ```
 
 For post questions, for men
+
 ```{r}
 post_only_M <- allYrsFinal|>
   filter(gender == "Male")|>
@@ -92,6 +116,7 @@ corrplot(cor(post_only_M))
 ```
 
 For post questions, for NAs
+
 ```{r}
 post_only_M <- allYrsFinal|>
   filter(gender == "Male")|>
@@ -103,12 +128,23 @@ corrplot(cor(post_only_M))
 ```
 
 ## Calc Prerequisites
+
 ```{r}
+calc_req_NA <- allYrsFinal|>
+  filter(math.prereq == "Calculus", 
+         cognitive.competence.pre != 0,
+         cognitive.competence.post != 0)|>
+  mutate(gender = case_when(is.na(gender) ~ "NA/Other",
+                            TRUE~gender),   mastering.confidence.change = mastering.confidence.post - mastering.confidence.pre)
+
+
 calc_req <- allYrsFinal|>
   filter(math.prereq == "Calculus", 
          !is.na(gender),
          cognitive.competence.pre != 0,
-         cognitive.competence.post != 0)
+         cognitive.competence.post != 0)|>
+  mutate(mastering.confidence.change = mastering.confidence.post - mastering.confidence.pre)
+
 
 calc.fit <- lme(cognitive.competence.change ~ gender+ instructor.gender +  years.teaching.intro.stats.binned, 
                 random = ~ 1+gender|instructor, data= calc_req)
@@ -121,6 +157,7 @@ qqnorm(resid(calc.fit), ylab="Residuals"); qqline(resid(calc.fit), lty = "dashed
 hist(resid(calc.fit), main = '', col="olivedrab", xlab = "Residuals")
   
 ```
+
 ```{r}
 summary(calc.fit) 
 
@@ -128,21 +165,23 @@ ranef(calc.fit) # coeffs for each instructor section
 ```
 
 ### model without instructor gender
-With instructor gender: 
-* 
-* residual StdDev = 0.8244677  
-* genderMale StdDev = 0.1897776
 
-Without instructor gender: 
+With instructor gender: \* \* residual StdDev = 0.8244677\
+\* genderMale StdDev = 0.1897776
 
-* residual StdDev = 0.8242596   
-* genderMlae StdDev = 0.1846574
+Without instructor gender:
 
+-   residual StdDev = 0.8242596\
+-   genderMale StdDev = 0.1846574
 
-Both models seem to explain a similar amount of variability
+With gender*instructor gender:* residual StdDev = 0.8226201\
+\* genderMale StdDev = 0.2226835
+
+With/without models seem to explain a similar amount of variability gender\*instructor gender explains a bit more variability
+
 ```{r}
 calc.fit2 <- lme(cognitive.competence.change ~ gender +  years.teaching.intro.stats.binned, 
-                random = ~ 1+gender|instructor, data= calc_req)
+                random = ~ 1+gender|instructor, data= calc_req_NA)
 
 plot(resid(calc.fit2) ~ fitted(calc.fit2), xlab = "Fitted", ylab="Residuals")
 abline(h=0, lty = "dashed")
@@ -153,20 +192,54 @@ hist(resid(calc.fit2), main = '', col="olivedrab", xlab = "Residuals")
 
 summary(calc.fit2)
 ```
+
+Turning some vars into factors for ggpredict
+
 ```{r}
-ranef(calc.fit2)
+calc_factor <- calc_req|>
+  mutate(gender = factor(gender),
+         instructor.gender= factor(instructor.gender),
+         years.teaching.intro.stats.binned = factor( years.teaching.intro.stats.binned),
+         instructor = factor(instructor))
 ```
 
+calc.fit.2 random slopes graph 
+
+The lines look pretty parallel = the effect of gender on cognitive competence change is consistent across instructors
 
 ```{r}
+
+calc.fit <- lme(cognitive.competence.change ~ gender+ instructor.gender +  years.teaching.intro.stats.binned, 
+                random = ~ 1+gender|instructor, data= calc_factor)
+
+calc_plot <- ggpredict(calc.fit, 
+          terms = c("gender", "years.teaching.intro.stats.binned", "instructor [sample=8]"),
+          type = "re")
+
+ggplot(calc_plot, aes(x=x, y=predicted, group = group, color = group))+
+  geom_line() +
+  labs(y= "Cognitive Competence Change", x="Female = 0, Male = 1", color = "Years Teaching Intro Stats")
+```
+
+No significant interactions?
+
+```{r}
+calc.fit_interaction <- lme(cognitive.competence.change ~ gender * instructor.gender +  years.teaching.intro.stats.binned, 
+                random = ~ 1|instructor, data= calc_req)
+
+summary(calc.fit_interaction)
+```
+
+### Checking of NAs and 0s in cognitive competence
+
+```{r, echo=FALSE}
 table(calc_req$years.teaching.intro.stats.binned)
 ```
-```{r}
+
+```{r, echo=FALSE}
 unique(calc_req$instructor.section)
 # not enough instructors to put in many variables pertaining to instructor
 ```
-
-
 
 ```{r}
 competencePre <- c("q6e.pre.a",  "q7a.pre.a", "q8f.pre.a", "q9a.pre.a", "q9b.pre.a",  "q9e.pre.a")
@@ -175,6 +248,7 @@ competencePost <- c("q6e.post.a",  "q7a.post.a", "q8f.post.a", "q9a.post.a", "q9
 calc_req|> # checking for NAs and 0s
   select(all_of(competencePre), cognitive.competence.pre)
 ```
+
 ```{r}
 table(is.na(calc_req$q7a.pre.a))
 table(calc_req$cognitive.competence.pre == 0) # get rid of (then check for post - make sure that they only get a 0 on cognitive.competence.pre/post if they didn't fill out any)
@@ -192,7 +266,6 @@ calc_req|>
   filter(cognitive.competence.post == 0) # none
 ```
 
-
 ```{r}
 table(is.na(calc_req$q7a.post.a))
 table(calc_req$cognitive.competence.post == 0) # get rid of (then check for post - make sure that they only get a 0 on cognitive.competence.pre/post if they didn't fill out any)
@@ -204,10 +277,10 @@ calc_req|>
   select(all_of(competencePost), cognitive.competence.post)
 ```
 
-
 ```{r}
 length(unique(calc_req$instructor.section))
 ```
+
 ```{r}
 boxplot(resid(calc.fit) ~ calc_req$carnegie.classification, xlab = "instructor section", ylab="Residuals")
 
@@ -222,6 +295,7 @@ table(calc_req$instructor.gender)
 table(calc_req$years.teaching.experience.binned)
 View(calc_req$years.teaching.experience.binned)
 ```
+
 ```{r}
 calc_req|>
   ggplot(aes(x=cognitive.competence.pre, y = cognitive.competence.post)) +
@@ -231,7 +305,6 @@ calc_req|>
   filter(cognitive.competence.pre == 0)
 ```
 
-
 ```{r}
 calc_req|>
   filter(is.na(years.teaching.experience.binned), 
@@ -239,12 +312,64 @@ calc_req|>
   select(institution, textbook.used, textbook.classification, carnegie.classification, instructor.section, years.teaching.intro.stats)
 ```
 
+### Regular regression with a gender\*instructor term
+
+Instructors that look worse for women and better for men:
+
+-   Instructor 99
+-   Instructor 182
+-   Instructor 234
+-   Instructor 77
+
+Instructors that look worse for men and better for women \* Instructor 40 (Female) \* Instructor 204 (Female) \* Instructor 95
+
+Instructor177 had a baseline cognitive competence change of -0.44 
+204, 243, and 40 were significant (204 was borderline significant) 
+genderMale:Instructor204 was borderline significant
+
+```{r}
+# reference instructor: 177
+calc_fit_reg <- lm(cognitive.competence.change ~ gender*instructor + years.teaching.intro.stats.binned, data= calc_req)
+
+summary(calc_fit_reg)
+
+color_instr <- rainbow(length(unique(calc_req$instructor)))
+color_instr_gender <- rainbow(length(unique(calc_req$instructor.gender)))
+
+interaction.plot(x.factor = calc_req$gender, trace.factor = calc_req$instructor, response = calc_req$cognitive.competence.change,
+                 xlab="Gender",
+                 ylab="Cognitive Competence Change",
+                 trace.label="Instructor",
+                 col = color_instr)
+
+interaction.plot(x.factor = calc_req$gender, trace.factor = calc_req$instructor.gender, response = calc_req$cognitive.competence.change,
+                 xlab="Gender",
+                 ylab="Cognitive Competence Change",
+                 trace.label="Instructor Gender", col=color_instr_gender)
+
+
+calc_req|>
+  select(instructor, instructor.gender)|>
+  distinct()
+```
+
+Significant instructors (significantly diff from 177)
+
+```{r}
+calc_req|>
+  filter(instructor=="Instructor204" |
+         instructor == "Instructor234" |
+         instructor == "Instructor40")|>
+  group_by(instructor, instructor.gender)|>
+  summarize(mean_cog_comp_change = mean(cognitive.competence.change, na.rm = TRUE), 
+            mean_ach_gain = mean(ach.gain.24, na.rm = TRUE), instructor.gender, 
+            .groups='drop')|>
+  distinct()
+```
+
 # Fitting other models to find something interesting
 
 ```{r}
-calc_req <- calc_req |>
-  mutate(mastering.confidence.change = mastering.confidence.post - mastering.confidence.pre)
-
 calc_req|>
   ggplot(aes(x=mastering.confidence.pre, y = mastering.confidence.post)) +
   geom_point()
@@ -258,28 +383,27 @@ calc_req|>
   filter(mastering.confidence.pre ==0 | mastering.confidence.post == 0)
 ```
 
-lme notes:
-fixed effects: coeffocoemts that are constant across individuals or entities
-random effects: vary among individuals or entities
+lme notes: fixed effects: coeffocoemts that are constant across individuals or entities random effects: vary among individuals or entities
 
 ### Model with mastering.confidence.change
-How cog comp change is influenced by gender, years teaching intro stats, and mastering confidence change. Random effects structure allows the intercept and slope for gender to vary by instructor. 
+
+How cog comp change is influenced by gender, years teaching intro stats, and mastering confidence change. Random effects structure allows the intercept and slope for gender to vary by instructor.
 
 Random effects
-* Intercept for instructor: StdDev very close to zero -> very little variability in the intercept across different instructors
 
-* genderMale: StdDev = 0.166 -> some variability in the effect of being male across different instructors
+\* Intercept for instructor: StdDev very close to zero -\> very little variability in the intercept across different instructors
 
-* Residual: StdDev = 0.708 -> within group variation (how to better interpret?)
+-   genderMale: StdDev = 0.166 -\> some variability in the effect of being male across different instructors
 
-Fixed Effects
-* Intercept: Intercept is not significantly different from 0
+-   Residual: StdDev = 0.708 -\> within group variation (how to better interpret?)
 
-* genderMale: gender does not have a signifcant effect on cog comp change
+Fixed Effects \* Intercept: Intercept is not significantly different from 0
 
-* years.teaching.intro.stats does not have a significant effect on cog comp change
+-   genderMale: gender does not have a signifcant effect on cog comp change
 
-* mastering.confidence.change: coeff = 0.3547 and significantly affects cog comp change
+-   years.teaching.intro.stats does not have a significant effect on cog comp change
+
+-   mastering.confidence.change: coeff = 0.3547 and significantly affects cog comp change
 
 ```{r}
 calc.fit3 <- lme(cognitive.competence.change ~ gender +  years.teaching.intro.stats.binned + mastering.confidence.change, 
@@ -295,33 +419,72 @@ summary(calc.fit3)
 
 ```
 
+Interaction plot : why just one line?
 
 ```{r}
-ranef(calc.fit3)
+calc.fit3_fct <- lme(cognitive.competence.change ~ gender +  years.teaching.intro.stats.binned + mastering.confidence.change,
+                random = ~ 1+gender|instructor, data= calc_factor, na.action=na.omit)
+
+plot_calc_3 <- ggpredict(calc.fit3_fct, terms = c("gender", "instructor [sample=8]"), type = "re")
+
+ggplot(plot_calc_3, aes(x=x, y =predicted, group = group, color = group)) +
+  geom_line(alpha = 0.5) +
+  labs(y= "Cognitive Competence Change", x= "Female = 0, Male = 1", color = "instructor")
 ```
 
-genderMale*mastering.confidence.change not significant
+genderMale\*mastering.confidence.change not significant
+
 ```{r}
 calc.fit3_interaction <- lme(cognitive.competence.change ~ gender*mastering.confidence.change +  years.teaching.intro.stats.binned,
                 random = ~ 1+gender|instructor, data= calc_req, na.action=na.omit)
-plot(resid(calc.fit4) ~ fitted(calc.fit4), xlab = "Fitted", ylab="Residuals")
-abline(h=0, lty = "dashed")
-#normal Q-Q plot of residuals 
-qqnorm(resid(calc.fit4), ylab="Residuals"); qqline(resid(calc.fit3), lty = "dashed")
-#histogram of residuals
-hist(resid(calc.fit4), main = '', col="olivedrab", xlab = "Residuals")
+# plot(resid(calc.fit3_interaction) ~ fitted(calc.fit3_interaction), xlab = "Fitted", ylab="Residuals")
+# abline(h=0, lty = "dashed")
+# #normal Q-Q plot of residuals 
+# qqnorm(resid(calc.fit3_interaction), ylab="Residuals"); qqline(resid(calc.fit3_interaction), lty = "dashed")
+# #histogram of residuals
+# hist(resid(calc.fit3_interaction), main = '', col="olivedrab", xlab = "Residuals")
 
 summary(calc.fit3_interaction)
 ```
 
-Loop through other attitudes (all look significant)
+Without gender as a random effect, gender is significant =\> at least 1 instructor has a different gender effect
+
+```{r}
+calc.fit3_noRandGender <- lme(cognitive.competence.change ~ gender +  years.teaching.intro.stats.binned + mastering.confidence.change, 
+                random = ~ 1|instructor, data= calc_req, na.action=na.omit)
+
+summary(calc.fit3_noRandGender)
+
+```
+
+Interaction plot (why one line?)
+
+```{r}
+calc.fit3_RandGender_int <- lme(cognitive.competence.change ~ years.teaching.intro.stats.binned + mastering.confidence.change*gender, 
+                random = ~ 1+gender|instructor, data= calc_factor, na.action=na.omit)
+
+plot_confidence_interaction3 <- ggpredict(calc.fit3_RandGender_int, terms = c("gender", "instructor [sample=8]"), type = "re")
+
+ggplot(plot_confidence_interaction3, aes(x=x, y = predicted, group = group, color = group)) +
+  geom_line(alpha = 0.5) +
+  labs(y="Cognitive Competence Change", x= "Female = 0, Male = 1", color = "instructor")
+```
+
+```{r}
+calc.fit3_noRandGender_int <- lme(cognitive.competence.change ~ years.teaching.intro.stats.binned + mastering.confidence.change*gender, 
+                random = ~ 1|instructor, data= calc_req, na.action=na.omit)
+summary(calc.fit3_noRandGender_int)
+```
+
+Loop through other attitudes \* all look significant \* no significant interactions \* Affect and Interest have the "most" significant interactions
+
 ```{r}
 other_attitudes_change <- c("affect.change", "difficulty.change", "effort.change", "interest.change", "value.change")
 
 summaries <- list()
   
 for (change in other_attitudes_change){
-  formula <- as.formula(paste("cognitive.competence.change ~ gender + ", change))
+  formula <- as.formula(paste("cognitive.competence.change ~ gender * ", change))
   
   calc.fit.loop <- lme(formula, random = ~ 1| instructor, data = calc_req, na.action = na.omit)
   summaries[[change]] <- summary(calc.fit.loop)
@@ -332,50 +495,194 @@ for (change in other_attitudes_change) {
   print(summaries[[change]])
 }
 ```
+
 ### Model with textbook classification
+
 Random effects:
 
-* Intercept: StdDev = 0.2181 -> some variability in cog comp change can be attributed to differences between instructors
+-   Intercept: StdDev = 0.2181 -\> some variability in cog comp change can be attributed to differences between instructors
 
-* Residuals: StdDev = 0.8274 -> variation in cog comp change within instructors not explained by fixed effects
+-   Residuals: StdDev = 0.8274 -\> variation in cog comp change within instructors not explained by fixed effects
 
 Fixed effects:
 
-* Intercept: baseline level of cog comp change for reference group (females with instructors with less than 5 years of teaching) -> not significant
+-   Intercept: baseline level of cog comp change for reference group (females with instructors with less than 5 years of teaching) -\> not significant
 
-* genderMale: coeff = -0.1882, p = 0.0305 -> On average, male students experience a 0.1882 unit decrease in cog comp change compared to female students, holding years teaching intro stats and textbook classification constant
+-   genderMale: coeff = -0.1882, p = 0.0305 -\> being male has a significant negative effect on cog comp change
 
-* 
+-   years teaching intro stats (10-20) does not have a significant effect on cog comp change compared with those with 0-5 years experience
+
+-   years teaching intro stats (5-10) has a positive signifcant increase on cog comp change than those with 0-5 years experience
+
+-   NotSBI, NotSBI2, and Other aren't different from ISI but OtherSBI is ???
+
+There are gender differences for genders using the same textbook
+
 ```{r}
 calc.fit5 <- lme(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned + textbook.classification, 
-                random = ~ 1|instructor, data= calc_req, na.action=na.omit)
+                random = ~ 1|instructor, data= calc_req_NA, na.action=na.omit)
 
 summary(calc.fit5)
 ```
+
+Random slopes (textbook classification)
+
 ```{r}
-calc.fit5_interaction <- lme(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned + textbook.classification + gender*years.teaching.intro.stats.binned, 
-                random = ~ 1|instructor, data= calc_req, na.action=na.omit)
+calc.fit5_fct <- lme(cognitive.competence.change ~ gender + + textbook.classification+years.teaching.intro.stats.binned , 
+                random = ~ 1|instructor, data= calc_factor, na.action=na.omit)
+
+calc5_plot <- ggpredict(calc.fit5_fct, 
+          terms = c("gender", "textbook.classification", "instructor [sample=8]"),
+          type = "re")
+
+ggplot(calc5_plot, aes(x=x, y=predicted, group = group, color = group))+
+  geom_line() +
+  labs(y= "Cognitive Competence Change", x="Female = 0, Male = 1", color = "textbook classification")
+```
+
+Investigate "imbalance" of gender across textbooks Proportions of males for each textbook classification
+
+```{r}
+unique(calc_req_NA$textbook.classification)
+
+calc_req_NA|>
+  group_by(textbook.classification)|>
+  summarize(
+    total = n(),
+    num_males = sum(gender == "Male")
+  ) |>
+  mutate(prop_males = num_males/total)
+
+```
+
+With textbook.classification*gender, genderMale p = 0.1770 
+
+No significant interaction terms 
+
+There is some imbalance of gender across the textbooks, but not enough to be signifcant?
+
+```{r}
+calc.fit5_interaction <- lme(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned +  textbook.classification * gender, 
+                random = ~ 1|instructor, data= calc_req, na.action = na.omit)
 
 summary(calc.fit5_interaction)
 ```
 
+## Applying to whole dataset:
+Turning some vars of allYrsFinal into factors
+```{r}
+allYrsFinal_factor <- allYrsFinal|>
+  mutate(gender = factor(gender),
+         instructor.gender= factor(instructor.gender),
+         years.teaching.intro.stats.binned = factor( years.teaching.intro.stats.binned),
+         instructor = factor(instructor))
+```
+
+### Gender, textbook classification, years teaching intro stats
+```{r}
+textbook.fit <- lme(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned + textbook.classification, 
+                random = ~ 1|instructor, data= allYrsFinal, na.action=na.omit)
+
+summary(textbook.fit)
+```
+Interaction plot
+Lines look pretty parallel
+```{r}
+textbook.fit_fct <- lme(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned + textbook.classification, 
+                random = ~ 1|instructor, data= allYrsFinal_factor, na.action=na.omit)
+
+textbook_plot <- ggpredict(textbook.fit_fct, 
+          terms = c("gender", "textbook.classification", "instructor [sample=8]"),
+          type = "re")
+
+ggplot(textbook_plot, aes(x=x, y=predicted, group = group, color = group))+
+  geom_line() +
+  labs(y= "Cognitive Competence Change", x="Female = 0, Male = 1", color = "Textbook")
+```
+
+
+Proportion of males for each textbook
+```{r}
+allYrsFinal|>
+  group_by(textbook.classification)|>
+  summarize(
+    total = n(),
+    num_males = sum(gender == "Male", na.rm = TRUE)
+  ) |>
+  mutate(prop_males = num_males/total)
+```
+
+Gender, 5-10 years, 10-20 years, NotSBI, OtherSBI genderMale:textbook.classificationNotSBI, genderMale:textbook.classificationOther significant
 
 ```{r}
-calc.fit6 <- lme(ach.gain.24 ~ gender + lecture.type + cognitive.competence.change, 
-                random = ~ 1|instructor, data= calc_req, na.action=na.omit)
+textbook.fit_randGender <- lme(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned +  textbook.classification, 
+                random = ~ 1+gender|instructor, data= allYrsFinal, na.action=na.omit)
+
+summary(textbook.fit_randGender)
+```
+```{r}
+textbook.fit_randGender_fct <- lme(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned +  textbook.classification, 
+                random = ~ 1+gender|instructor, data= allYrsFinal_factor, na.action=na.omit)
+textbook_plot2 <- ggpredict(textbook.fit_randGender_fct, 
+          terms = c("gender", "textbook.classification", "instructor [sample=8]"),
+          type = "re")
+
+ggplot(textbook_plot2, aes(x=x, y=predicted, group = group, color = group))+
+  geom_line() +
+  labs(y= "Cognitive Competence Change", x="Female = 0, Male = 1", color = "Textbook")
+
+```
+
+Regular regression: gender*textbook.classification
+```{r}
+reg_text.fit <- lm(cognitive.competence.change~gender*textbook.classification + years.teaching.intro.stats.binned + instructor.gender, data = allYrsFinal)
+
+summary(reg_text.fit)
+
+num_classes <- length(unique(allYrsFinal$textbook.classification))
+textbook_colors <- brewer.pal(min(num_classes, 6), "Dark2")
+
+interaction.plot(x.factor=allYrsFinal$gender, trace.factor = allYrsFinal$textbook.classification, response = allYrsFinal$cognitive.competence.change,
+                 xlab = "Gender",
+                 ylab = "Cognitive Competence Change",
+                 trace.label = "Textbook Classification",
+                 col = textbook_colors)
+```
+
+
+### Predicting ach gain
+
+Random effects
+
+-   Intercept StdDev = 0.1802149 -\> some variability in ach.gain.24 between different instructors
+-   Residual StdDev = 0.2890601
+
+Fixed effects
+
+-   genderMale has a positive significant effect on ach.gain.24 when compared to females
+-   genderNA/Other does not have a significant effect on ach.gain.24 compared to females
+-   years.teaching.intro.stats.binned10-20: does not have a significant effect on ach.gain.24 compared to 0-5 years
+-   years.teaching.intro.stats.binned5-10 has a significant negative effect on ach.gain.24 compared to 0-5 years
+-   cognitive.competence.change has a positive and significant effect on ach.gain.24
+
+```{r}
+calc.fit6 <- lme(ach.gain.24 ~ gender + years.teaching.intro.stats.binned + cognitive.competence.change, 
+                random = ~ 1|instructor, data= calc_req_NA)
 
 summary(calc.fit6)
 ```
+
 Interaction between gender and pre?
+
 ```{r}
-calc.fit7 <- lme(cognitive.competence.change ~ gender + textbook.classification + cognitive.competence.pre*gender, 
-                random = ~ 1|instructor, data= calc_req, na.action=na.omit)
+calc.fit7 <- lme(cognitive.competence.change ~ gender + ach.gain.24 + textbook.classification, 
+                random = ~ 1+gender|instructor, data= calc_req, na.action=na.omit)
 
 summary(calc.fit7)
 ```
 
-
 ### Trying K-means clustering?
+
 ```{r}
 calc_req |>
   ggplot(aes(x= cognitive.competence.pre, y = cognitive.competence.change,  color=gender, shape = textbook.classification)) +
@@ -425,6 +732,7 @@ scree_plot <- ggplot(wss_df, aes(x = clusters, y = wss, group = 1)) +
     xlab('Number of clusters')
 scree_plot
 ```
+
 ```{r}
 km.out <- kmeans(calc_cols, centers = 5, nstart = 20)
 
@@ -436,6 +744,7 @@ ggplot(calc_cols, aes(x= cognitive.competence.pre, y=cognitive.competence.change
 ```
 
 Compare with only binary SBI
+
 ```{r}
 unique(calc_req$textbook.classification)
 calc_req <- calc_req|>
@@ -450,8 +759,8 @@ calc_req |>
 
 ```
 
-
 # Individual graphs
+
 ```{r}
 calc_req |>
   ggplot(aes(x=gender, y = cognitive.competence.change)) + 
@@ -483,96 +792,12 @@ calc_req|>
 ```
 
 
-### Investigate bimodal female instructors 
- 3 female instructors who only taught 1 section each
- 5 male instructors
-```{r}
-calc_req |>
-  group_by(instructor.gender)|>
-  summarize(unique(instructor))
-```
-Looks like the female instructors have overall less teaching experience than the male ones for calc pre-req courses
-1) 5.5
-2) 3.0
-3) NA
-```{r}
-calc_req |>
-  group_by(instructor.gender)|>
-  summarize(unique(years.teaching.experience))
-```
-
-Instructor 73 had a 34:11 high to low ratio
-Instructor 40 had a 11:12 high to low ratio
-Instructor 204 had a 10:0 high to low ratio 
-
-Instructor 40 had the lowest mean and median cognitive competence change
-```{r}
-calc_req <- calc_req|>
-  filter(instructor.gender == "Female")|>
-  mutate(cog_comp_change_dummy = case_when(cognitive.competence.change <= -2 ~ "low",
-                                           cognitive.competence.change > -2 ~ "high"))
-  
-calc_req |>
-  filter(instructor.gender == "Female") |>
-  group_by(instructor)|>
-  count(cog_comp_change_dummy)
-
-calc_req |>
-  filter(instructor.gender == "Female") |>
-  group_by(instructor)|>
-  summarize(mean(cognitive.competence.change), median(cognitive.competence.change))
 
 
-```
-
-```{r}
-calc_req |>
-  filter(instructor.gender == "Female")|>
-  group_by(cog_comp_change_dummy)|>
-  count()
-
-calc_req|>
-  filter(instructor.gender == "Female")|>
-  filter(cognitive.competence.change <= -2)|>
-  count()
-
-calc_req|>
-  filter(instructor.gender == "Female")|>
-  filter(cognitive.competence.change > -2)|>
-  count()
-```
-
-
-```{r}
-
-calc.fit2 <- lm(cognitive.competence.change ~ gender + instructor.gender + years.teaching.experience.binned +  instructor + instructor.gender:years.teaching.experience.binned + instructor.gender:instructor, data= calc_req)
-
-
-plot(resid(calc.fit2) ~ fitted(calc.fit2), xlab = "Fitted", ylab="Residuals")
-abline(h=0, lty = "dashed")
-#normal Q-Q plot of residuals 
-qqnorm(resid(calc.fit2), ylab="Residuals"); qqline(resid(calc.fit2), lty = "dashed")
-#histogram of residuals
-hist(resid(calc.fit2), main = '', col="olivedrab", xlab = "Residuals", breaks =20)
-```
-
-```{r}
-calc.fit3 <- lm(cognitive.competence.change ~ gender + years.teaching.experience.binned +  instructor, data= calc_req)
-
-
-plot(resid(calc.fit3) ~ fitted(calc.fit3), xlab = "Fitted", ylab="Residuals")
-abline(h=0, lty = "dashed")
-#normal Q-Q plot of residuals 
-qqnorm(resid(calc.fit3), ylab="Residuals"); qqline(resid(calc.fit3), lty = "dashed")
-#histogram of residuals
-hist(resid(calc.fit3), main = '', col="olivedrab", xlab = "Residuals", breaks =20)
-```
-
-
-
-## Cog Comp Change boxplots 
+## Cog Comp Change boxplots
 
 ### Across calc pre-req classes
+
 ```{r}
 calc_req|>
   ggplot(aes(x=gender, y=cognitive.competence.change)) + 
@@ -586,6 +811,7 @@ calc_req |>
 ```
 
 ### Across non-calc pre-req classes
+
 ```{r}
 non_calc <- allYrsFinal|>
   filter(math.prereq != "Calculus") 
@@ -602,6 +828,7 @@ non_calc|>
 ```
 
 ### Across 4-year schools - are there any outstanding ones?
+
 ```{r}
 # allYrsFinal|>
 #   select(institution)
@@ -620,6 +847,7 @@ allYrsFinal |>
 ```
 
 # Find worst instructor at worst school for cog comp change (Instructor50)
+
 ```{r}
 allYrsFinal|>
   filter(institution == 40)|>
@@ -628,7 +856,9 @@ allYrsFinal|>
   arrange(mean_cog_comp_change)
   
 ```
+
 # Find worst section (both were bad)
+
 ```{r}
 allYrsFinal|>
   filter(instructor == "Instructor50")|>
@@ -658,8 +888,8 @@ instr_50 |>
 instr_50["instructor.gender"] # female instructor
 ```
 
-
 # Best instructor at best school for cog comp change (only 1 instructor: Instructor33)
+
 ```{r}
 allYrsFinal |>
   filter(institution == 28)|>
@@ -667,6 +897,7 @@ allYrsFinal |>
   summarize(mean_cog_comp_change = mean(cognitive.competence.change))|>
   arrange(mean_cog_comp_change)
 ```
+
 ```{r}
 allYrsFinal |>
   filter(instructor == "Instructor33")|>
@@ -695,7 +926,9 @@ instr_33 |>
 
 instr_33["instructor.gender"] # female instructor
 ```
+
 # Find top 10 sections in Year 3
+
 ```{r}
 top10 <- allYrsFinal|>
   filter(year == "16-17") |>
@@ -709,6 +942,7 @@ top10
 ```
 
 Long format
+
 ```{r}
 competenceFull <- c("q6e.pre.a", "q6e.post.a", "q7a.pre.a", "q7a.post.a", "q8f.pre.a", "q8f.post.a", "q9a.pre.a", "q9a.post.a", "q9b.pre.a", "q9b.post.a", "q9e.pre.a", "q9e.post.a")
 
@@ -737,6 +971,7 @@ questions_change_top10 <- questions_wide_top10 |>
 ```
 
 Change Per Question by Gender Boxplots (top 10)
+
 ```{r}
 
 
@@ -745,7 +980,9 @@ questions_change_top10|>
   geom_boxplot() +
   labs(title="Top 10 sections: Change Per Question by Gender Boxplots")
 ```
+
 Change Per Question by Gender Line Graph
+
 ```{r}
 questions_change_top10|>
   mutate(question_num = factor(question_num, levels = unique(question_num))) |>
@@ -757,6 +994,7 @@ questions_change_top10|>
 ```
 
 # Find lowest 10 sections
+
 ```{r}
 low10 <- allYrsFinal|>
   filter(year == "16-17") |>
@@ -770,6 +1008,7 @@ low10
 ```
 
 Long format
+
 ```{r}
 questions_long_low10 <- low10 |>
   select(all_of(competenceFull), gender, ach.gain.24) |>
@@ -796,6 +1035,7 @@ questions_change_low10 <- questions_wide_low10 |>
 ```
 
 Change Per Question by Gender Boxplots (lowest 10)
+
 ```{r}
 questions_change_top10|>
   ggplot(aes(x=question_num, y=change, color = gender)) + 
@@ -804,6 +1044,7 @@ questions_change_top10|>
 ```
 
 Change Per Question by Gender Line Graph (lowest 10)
+
 ```{r}
 questions_change_top10|>
   mutate(question_num = factor(question_num, levels = unique(question_num))) |>
@@ -815,8 +1056,8 @@ questions_change_top10|>
 ```
 
 ## ISCAM instructors
+
 ```{r}
 allYrsFinal|>
   filter(textbook.classification == "ISCAM")
 ```
-

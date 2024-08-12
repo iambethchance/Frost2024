@@ -20,8 +20,10 @@ library(broom)
 library(corrplot)
 library(MASS)
 library(nlme)
+library(lme4)
 library(ggeffects)
 library(RColorBrewer)
+library(effects)
 load(url("http://www.rossmanchance.com/iscam3/ISCAM.RData"))
 
 select <- dplyr::select
@@ -127,7 +129,7 @@ cor(post_only_M)
 corrplot(cor(post_only_M))
 ```
 
-## Calc Prerequisites
+# Calc Prerequisites
 
 ```{r}
 calc_req_NA <- allYrsFinal|>
@@ -200,35 +202,29 @@ calc_factor <- calc_req|>
   mutate(gender = factor(gender),
          instructor.gender= factor(instructor.gender),
          years.teaching.intro.stats.binned = factor( years.teaching.intro.stats.binned),
-         instructor = factor(instructor))
+         instructor = factor(instructor),
+         textbook.classification = factor(textbook.classification))
 ```
 
-calc.fit.2 random slopes graph 
+
+Random Slopes Graph with Only Gender and Instructor
 
 The lines look pretty parallel = the effect of gender on cognitive competence change is consistent across instructors
 
 ```{r}
 
-calc.fit <- lme(cognitive.competence.change ~ gender+ instructor.gender +  years.teaching.intro.stats.binned, 
+calc.fit <- lme(cognitive.competence.change ~ gender, 
                 random = ~ 1+gender|instructor, data= calc_factor)
 
 calc_plot <- ggpredict(calc.fit, 
-          terms = c("gender", "years.teaching.intro.stats.binned", "instructor [sample=8]"),
+          terms = c("gender", "instructor [sample=8]"),
           type = "re")
 
 ggplot(calc_plot, aes(x=x, y=predicted, group = group, color = group))+
   geom_line() +
-  labs(y= "Cognitive Competence Change", x="Female = 0, Male = 1", color = "Years Teaching Intro Stats")
+  labs(y= "Cognitive Competence Change", x="Female = 0, Male = 1", color = "Instructor")
 ```
 
-No significant interactions?
-
-```{r}
-calc.fit_interaction <- lme(cognitive.competence.change ~ gender * instructor.gender +  years.teaching.intro.stats.binned, 
-                random = ~ 1|instructor, data= calc_req)
-
-summary(calc.fit_interaction)
-```
 
 ### Checking of NAs and 0s in cognitive competence
 
@@ -328,6 +324,7 @@ Instructor177 had a baseline cognitive competence change of -0.44
 genderMale:Instructor204 was borderline significant
 
 ```{r}
+library(gridExtra)
 # reference instructor: 177
 calc_fit_reg <- lm(cognitive.competence.change ~ gender*instructor + years.teaching.intro.stats.binned, data= calc_req)
 
@@ -336,7 +333,7 @@ summary(calc_fit_reg)
 color_instr <- rainbow(length(unique(calc_req$instructor)))
 color_instr_gender <- rainbow(length(unique(calc_req$instructor.gender)))
 
-interaction.plot(x.factor = calc_req$gender, trace.factor = calc_req$instructor, response = calc_req$cognitive.competence.change,
+reg_interaction <- interaction.plot(x.factor = calc_req$gender, trace.factor = calc_req$instructor, response = calc_req$cognitive.competence.change,
                  xlab="Gender",
                  ylab="Cognitive Competence Change",
                  trace.label="Instructor",
@@ -351,6 +348,21 @@ interaction.plot(x.factor = calc_req$gender, trace.factor = calc_req$instructor.
 calc_req|>
   select(instructor, instructor.gender)|>
   distinct()
+
+# textbook classification made a difference
+calc.fit5 <- lmer(cognitive.competence.change ~ gender +  (1+gender|instructor), data= calc_req, na.action=na.omit)
+
+summary(calc.fit5)
+ranef(calc.fit5)
+
+lmer_interaction <- plot(ggpredict(calc.fit5, terms = c("gender", "instructor [sample=8]"), type = "re"), show_ci=F)
+lmer_interaction 
+
+plot(effect("gender", calc.fit5, data=calc.req))
+
+#plot(allEffects(c("gender", "instructor"), calc.fit5, data=calc.req))
+
+grid.arrange(reg_interaction, lmer_interaction, ncol=2)
 ```
 
 Significant instructors (significantly diff from 177)
@@ -419,62 +431,49 @@ summary(calc.fit3)
 
 ```
 
-Interaction plot : why just one line?
-
 ```{r}
-calc.fit3_fct <- lme(cognitive.competence.change ~ gender +  years.teaching.intro.stats.binned + mastering.confidence.change,
-                random = ~ 1+gender|instructor, data= calc_factor, na.action=na.omit)
+calc.fit3 <- lmer(cognitive.competence.change ~ gender +  years.teaching.intro.stats.binned + mastering.confidence.change + (1+gender|instructor), data= calc_req, na.action=na.omit)
 
-plot_calc_3 <- ggpredict(calc.fit3_fct, terms = c("gender", "instructor [sample=8]"), type = "re")
+summary(calc.fit3)
 
-ggplot(plot_calc_3, aes(x=x, y =predicted, group = group, color = group)) +
-  geom_line(alpha = 0.5) +
-  labs(y= "Cognitive Competence Change", x= "Female = 0, Male = 1", color = "instructor")
+plot(ggpredict(calc.fit3, terms = c("gender", "instructor [sample=8]"), type = "re"), show_ci=F)
+
+plot(effect(term="gender", calc.fit3 , data=calc.req))
+
 ```
+
+
 
 genderMale\*mastering.confidence.change not significant
+But what is going on in the plot??
 
 ```{r}
-calc.fit3_interaction <- lme(cognitive.competence.change ~ gender*mastering.confidence.change +  years.teaching.intro.stats.binned,
-                random = ~ 1+gender|instructor, data= calc_req, na.action=na.omit)
-# plot(resid(calc.fit3_interaction) ~ fitted(calc.fit3_interaction), xlab = "Fitted", ylab="Residuals")
-# abline(h=0, lty = "dashed")
-# #normal Q-Q plot of residuals 
-# qqnorm(resid(calc.fit3_interaction), ylab="Residuals"); qqline(resid(calc.fit3_interaction), lty = "dashed")
-# #histogram of residuals
-# hist(resid(calc.fit3_interaction), main = '', col="olivedrab", xlab = "Residuals")
+calc.fit3_interaction <- lmer(cognitive.competence.change ~ gender*mastering.confidence.change +  years.teaching.intro.stats.binned +
+                (1+gender|instructor), data= calc_req, na.action=na.omit)
 
 summary(calc.fit3_interaction)
+
+plot(ggpredict(calc.fit3_interaction, terms = c("gender", "instructor [sample=8]"), type = "re"), show_ci=F)
+
+plot(effect(term="gender", calc.fit3_interaction , data=calc.req))
 ```
 
-Without gender as a random effect, gender is significant =\> at least 1 instructor has a different gender effect
 
+There's variability in the baseline cognitive competence change among different instructors.
+The effect of gender on cognitive competence change varies across instructors, although the fixed effect of gender is not statistically significant.
+The variability in teaching experience (years of teaching) does not seem to have a significant effect on cognitive competence change.
 ```{r}
-calc.fit3_noRandGender <- lme(cognitive.competence.change ~ gender +  years.teaching.intro.stats.binned + mastering.confidence.change, 
-                random = ~ 1|instructor, data= calc_req, na.action=na.omit)
+ calc.fit3_RandGender <- lmer(cognitive.competence.change ~ gender +  years.teaching.intro.stats.binned  + ( 1 + gender|instructor), data= calc_req, na.action=na.omit)
 
-summary(calc.fit3_noRandGender)
+summary(calc.fit3_RandGender)
+
+plot(ggpredict(calc.fit3_noRandGender, terms = c("gender", "instructor [sample=8]"), type = "re"), show_ci= F)
+
+plot(effect(term="gender", mod = calc.fit3_RandGender, data=calc_req))
 
 ```
 
-Interaction plot (why one line?)
 
-```{r}
-calc.fit3_RandGender_int <- lme(cognitive.competence.change ~ years.teaching.intro.stats.binned + mastering.confidence.change*gender, 
-                random = ~ 1+gender|instructor, data= calc_factor, na.action=na.omit)
-
-plot_confidence_interaction3 <- ggpredict(calc.fit3_RandGender_int, terms = c("gender", "instructor [sample=8]"), type = "re")
-
-ggplot(plot_confidence_interaction3, aes(x=x, y = predicted, group = group, color = group)) +
-  geom_line(alpha = 0.5) +
-  labs(y="Cognitive Competence Change", x= "Female = 0, Male = 1", color = "instructor")
-```
-
-```{r}
-calc.fit3_noRandGender_int <- lme(cognitive.competence.change ~ years.teaching.intro.stats.binned + mastering.confidence.change*gender, 
-                random = ~ 1|instructor, data= calc_req, na.action=na.omit)
-summary(calc.fit3_noRandGender_int)
-```
 
 Loop through other attitudes \* all look significant \* no significant interactions \* Affect and Interest have the "most" significant interactions
 
@@ -519,28 +518,32 @@ Fixed effects:
 There are gender differences for genders using the same textbook
 
 ```{r}
-calc.fit5 <- lme(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned + textbook.classification, 
-                random = ~ 1|instructor, data= calc_req_NA, na.action=na.omit)
+calc.fit5 <- lmer(cognitive.competence.change ~ gender + textbook.classification + (1+gender|instructor), data= calc_req, na.action=na.omit)
+
+calc.fit5_noRandGender <- lmer(cognitive.competence.change ~ gender + textbook.classification + (1|instructor), data= calc_req, na.action=na.omit)
+
+anova(calc.fit5 , calc.fit5_noRandGender)
 
 summary(calc.fit5)
+ranef(calc.fit5)
+
+plot(ggpredict(calc.fit5, terms = c("gender", "instructor [sample=8]"), type = "re"), show_ci=F)
+
+plot(effect("gender", calc.fit5, data=calc.req))
+
+plot(allEffects(c("gender", "instructor"), calc.fit5, data=calc.req))
 ```
 
 Random slopes (textbook classification)
 
 ```{r}
-calc.fit5_fct <- lme(cognitive.competence.change ~ gender + + textbook.classification+years.teaching.intro.stats.binned , 
-                random = ~ 1|instructor, data= calc_factor, na.action=na.omit)
+calc.fit5_lme <- lme(cognitive.competence.change ~ gender + textbook.classification , 
+                random = ~ 1 +gender |instructor, data= calc_req, na.action=na.omit)
 
-calc5_plot <- ggpredict(calc.fit5_fct, 
-          terms = c("gender", "textbook.classification", "instructor [sample=8]"),
-          type = "re")
-
-ggplot(calc5_plot, aes(x=x, y=predicted, group = group, color = group))+
-  geom_line() +
-  labs(y= "Cognitive Competence Change", x="Female = 0, Male = 1", color = "textbook classification")
+summary(calc.fit5_lme)
 ```
 
-Investigate "imbalance" of gender across textbooks Proportions of males for each textbook classification
+Investigate "imbalance" of gender across textbooks: Proportions of males for each textbook classification
 
 ```{r}
 unique(calc_req_NA$textbook.classification)
@@ -562,11 +565,56 @@ No significant interaction terms
 There is some imbalance of gender across the textbooks, but not enough to be signifcant?
 
 ```{r}
-calc.fit5_interaction <- lme(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned +  textbook.classification * gender, 
-                random = ~ 1|instructor, data= calc_req, na.action = na.omit)
+calc.fit6<- lmer(cognitive.competence.change ~ gender +  textbook.classification + years.teaching.intro.stats.binned+ (1+gender|instructor), data= calc_req, na.action = na.omit)
 
-summary(calc.fit5_interaction)
+summary(calc.fit6)
+
+plot(ggpredict(calc.fit6, terms = c("gender", "instructor [sample=8]"), type = "re"), show_ci=F)
+
+plot(effect(term="gender", calc.fit6, data=calc.req))
+
 ```
+
+Textbook classification, years teaching intro stats, instructor gender
+```{r}
+calc.fit7<- lmer(cognitive.competence.change ~ gender +  textbook.classification + years.teaching.intro.stats.binned+ instructor.gender + (1+gender|instructor), data= calc_req, na.action = na.omit)
+
+summary(calc.fit7)
+
+plot(ggpredict(calc.fit7, terms = c("gender", "instructor [sample=8]"), type = "re"), show_ci=F)
+
+plot(effect(term="gender", calc.fit7, data=calc.req))
+
+```
+
+
+Without years teaching intro stats
+```{r}
+calc.fit8<- lmer(cognitive.competence.change ~ gender +  textbook.classification + instructor.gender + (1+gender|instructor), data= calc_req, na.action = na.omit)
+
+summary(calc.fit8)
+
+plot(ggpredict(calc.fit8, terms = c("gender", "instructor [sample=8]"), type = "re"), show_ci=F)
+
+plot(effect(term="gender", calc.fit8, data=calc.req))
+
+```
+
+
+
+```{r}
+calc.fit9<- lmer(cognitive.competence.change ~ gender +  TA + years.teaching.intro.stats.binned + (1+gender|instructor), data= calc_req, na.action = na.omit)
+
+summary(calc.fit9)
+
+plot(ggpredict(calc.fit9, terms = c("gender", "instructor [sample=8]"), type = "re"), show_ci=F)
+
+plot(effect(term="gender", calc.fit9, data=calc.req))
+
+```
+
+
+
 
 ## Applying to whole dataset:
 Turning some vars of allYrsFinal into factors
@@ -584,21 +632,21 @@ textbook.fit <- lme(cognitive.competence.change ~ gender + years.teaching.intro.
                 random = ~ 1|instructor, data= allYrsFinal, na.action=na.omit)
 
 summary(textbook.fit)
+
+
+
 ```
 Interaction plot
 Lines look pretty parallel
 ```{r}
-textbook.fit_fct <- lme(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned + textbook.classification, 
-                random = ~ 1|instructor, data= allYrsFinal_factor, na.action=na.omit)
+textbook.fit_lmer <- lmer(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned + textbook.classification +(1+gender|instructor), data= allYrsFinal, na.action=na.omit)
 
-textbook_plot <- ggpredict(textbook.fit_fct, 
-          terms = c("gender", "textbook.classification", "instructor [sample=8]"),
-          type = "re")
+summary(textbook.fit_lmer)
 
-ggplot(textbook_plot, aes(x=x, y=predicted, group = group, color = group))+
-  geom_line() +
-  labs(y= "Cognitive Competence Change", x="Female = 0, Male = 1", color = "Textbook")
+
+plot(ggpredict(textbook.fit_lmer, terms = c("gender", "instructor [sample=8]"), type = "re"), show_ci=F)
 ```
+
 
 
 Proportion of males for each textbook

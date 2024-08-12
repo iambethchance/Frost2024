@@ -1,0 +1,645 @@
+---
+title: "Exploratory analysis: gender and cognitive competence"
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
+    toc: true
+warning: false
+editor: visual
+embed-resources: true
+---
+
+### Attatching packages
+
+```{r}
+#| message: false
+library(readr)
+library(tidyverse)
+library(broom)
+library(corrplot)
+library(MASS)
+library(nlme)
+library(lme4)
+library(ggeffects)
+library(RColorBrewer)
+library(effects)
+load(url("http://www.rossmanchance.com/iscam3/ISCAM.RData"))
+
+select <- dplyr::select
+```
+
+### Loading in data
+```{r}
+#| message: false
+allYrsFinal <- read_csv("FinalData/All Years Final Public - with Vars.csv")
+allYrsFinal_NA <- allYrsFinal |>
+  filter(cognitive.competence.pre != 0,
+         cognitive.competence.post != 0)|>
+  mutate(gender = case_when(is.na(gender) ~ "NA/Other",
+                            TRUE~gender))
+
+ allYrsFinal <- allYrsFinal |>
+  filter(cognitive.competence.pre != 0,
+         cognitive.competence.post != 0)
+```
+
+### Subsetting by to calc prerequisite classes
+```{r}
+calc_req_NA <- allYrsFinal|>
+  filter(math.prereq == "Calculus", 
+         cognitive.competence.pre != 0,
+         cognitive.competence.post != 0)|>
+  mutate(gender = case_when(is.na(gender) ~ "NA/Other",
+                            TRUE~gender),   mastering.confidence.change = mastering.confidence.post - mastering.confidence.pre)
+
+
+calc_req <- allYrsFinal|>
+  filter(math.prereq == "Calculus", 
+         !is.na(gender),
+         cognitive.competence.pre != 0,
+         cognitive.competence.post != 0)|>
+  mutate(mastering.confidence.change = mastering.confidence.post - mastering.confidence.pre)
+
+# 258 females, 165 males, and 1 NA/Other for calc prereq classes
+calc_req_NA|>
+  group_by(gender)|>
+  count()
+```
+
+# Model Fitting
+
+### Regular lm model gender * instructor interaction
+```{r}
+calc.fit_reg <- lm(cognitive.competence.change ~ gender*instructor , data= calc_req)
+
+summary(calc.fit_reg)
+
+color_instr <- rainbow(length(unique(calc_req$instructor)))
+color_instr_gender <- rainbow(length(unique(calc_req$instructor.gender)))
+
+interaction.plot(x.factor = calc_req$gender, trace.factor = calc_req$instructor, response = calc_req$cognitive.competence.change,
+                 xlab="Gender",
+                 ylab="Cognitive Competence Change",
+                 trace.label="Instructor",
+                 col = color_instr)
+
+
+```
+
+### lmer model with a random slope of gender within instructor 
+```{r}
+calc.fit1 <- lmer(cognitive.competence.change ~ gender +  (1+gender|instructor), data= calc_req, na.action=na.omit)
+
+summary(calc.fit1)
+ranef(calc.fit1)
+#plot(effect("gender", calc.fit1, data=calc.req))
+
+
+plot_data1 <- ggpredict(calc.fit1, terms = c("gender", "instructor [sample=8]"), type = "re")
+
+ggplot(plot_data1, aes(x = x, y = predicted, color = group)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = group), alpha = 0.7) +
+  labs(
+    title = "Predicted values of Cognitive Competence Change",
+    y = "Cognitive Competence Change",
+    x = "Gender",
+    color = "Instructor"
+  ) +
+  theme_minimal()
+```
+
+### Compare to lmer model without a random slope of gender - > gender random slope not significant 
+```{r}
+calc.fit2 <- lmer(cognitive.competence.change ~ gender +  (1|instructor), data= calc_req, na.action=na.omit)
+summary(calc.fit2)
+
+plot_data2 <- ggpredict(calc.fit2, terms = c("instructor [sample=8]"), type = "re")
+
+ggplot(plot_data2, aes(x = x, y = predicted)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = group), alpha = 0.7) +
+  labs(
+    title = "Predicted values of Cognitive Competence Change",
+    y = "Cognitive Competence Change",
+    x = "Instructor",
+  ) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme_minimal()
+
+#plot(effect("gender", calc.fit2, data=calc.req))
+
+anova(calc.fit1, calc.fit2) 
+```
+
+### lmer model with years.teaching.stats.binned and a random slope of gender within instructor
+```{r}
+calc.fit3 <- lmer(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned + (1+gender|instructor), data= calc_req, na.action=na.omit)
+
+summary(calc.fit3)
+
+plot_data3 <- ggpredict(calc.fit3, terms = c("gender", "instructor"), type = "re", show_ci=F)
+
+ggplot(plot_data3, aes(x = x, y = predicted, color = group)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = group), alpha = 0.7) +
+  labs(
+    title = "Predicted values of cognitive.competence.change",
+    y = "cognitive.competence.change",
+    x = "gender",
+    color = "instructor"
+  ) +
+  theme_minimal()
+```
+
+### Compare to lmer model without gender as a random slope -> gender random slope not significant
+```{r}
+calc.fit4 <- lmer(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned + (1|instructor), data= calc_req, na.action=na.omit)
+
+anova(calc.fit3, calc.fit4)
+
+
+
+```
+```{r}
+calc.fit4 <- lmer(cognitive.competence.change ~ gender + years.teaching.intro.stats.binned + (1|instructor), data= calc_req, na.action=na.omit)
+
+summary(calc.fit4)
+
+
+plot_data4 <- ggpredict(calc.fit4, terms = c("instructor"), type = "re")
+
+ggplot(plot_data4, aes(x = x, y = predicted)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = group), alpha = 0.7) +
+  labs(
+    title = "Predicted values of Cognitive Competence Change",
+    y = "Cognitive Competence Change",
+    x = "Instructor",
+  ) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme_minimal()
+
+```
+
+### lmer model with textbook classification and a random slope of gender within instructor
+```{r}
+calc.fit5 <- lmer(cognitive.competence.change ~ gender + textbook.classification + (1+gender|instructor), data= calc_req, na.action=na.omit)
+
+summary(calc.fit5)
+
+plot_data5 <- ggpredict(calc.fit5, terms = c("gender", "instructor"), type = "re", show_ci=F)
+
+ggplot(plot_data5, aes(x = x, y = predicted, color = group)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = group), alpha = 0.7) +
+  labs(
+    title = "Predicted values of cognitive.competence.change",
+    y = "cognitive.competence.change",
+    x = "gender",
+    color = "instructor"
+  ) + 
+  theme_minimal()
+
+```
+
+### lmer predicting post with gender and textbook classification
+```{r}
+calc.fit6 <- lmer(cognitive.competence.post ~ gender + textbook.classification + (1+gender|instructor), data= calc_req, na.action=na.omit)
+
+summary(calc.fit6)
+
+plot_data6 <- ggpredict(calc.fit6, terms = c("gender", "instructor"), type = "re", show_ci=F)
+
+ggplot(plot_data6, aes(x = x, y = predicted, color = group)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = group), alpha = 0.7) +
+  labs(
+    title = "Predicted values of cognitive.competence.post",
+    y = "cognitive.competence.post",
+    x = "gender",
+    color = "instructor"
+  ) + 
+  theme_minimal()
+
+```
+
+# Investigate trends with instructors
+
+### Instructor 234
+```{r}
+calc_req |>
+  filter(instructor == "Instructor234") |>
+  select(instructor.section, instructor.gender, department.type, years.teaching.intro.stats.binned, textbook.classification, gaise.familiar, institution, lecture.type) |>
+  distinct()
+
+
+```
+
+### Instructor 40
+```{r}
+calc_req|>
+  filter(instructor == "Instructor40")|>
+  select(instructor.section, instructor.gender, department.type, years.teaching.intro.stats.binned, textbook.classification, gaise.familiar, institution, lecture.type)|>
+  distinct()
+```
+### Instructor 73
+```{r}
+calc_req|>
+  filter(instructor == "Instructor73")|>
+  select(instructor.section, instructor.gender, department.type, years.teaching.intro.stats.binned, textbook.classification, gaise.familiar, institution, lecture.type) |>
+  distinct()
+```
+
+### Instructor 99
+```{r}
+calc_req|>
+  filter(instructor == "Instructor99")|>
+  select(instructor.section, instructor.gender, department.type, years.teaching.intro.stats.binned, textbook.classification, gaise.familiar, institution, lecture.type) |>
+  distinct()
+```
+
+## Plotting instructors
+Not much of a trend
+```{r}
+calc_req|>
+  ggplot(aes(x=cognitive.competence.change, y = ach.gain.24, color = instructor)) +
+  geom_point()
+```
+
+### Table of instructor and instructor section
+```{r}
+table(calc_req$instructor.section, calc_req$instructor)
+```
+
+### lmer with instructor section in the model, but color by intructor
+```{r}
+calc.fit7 <- lmer(cognitive.competence.change ~ gender + textbook.classification + instructor.section + (1+gender|instructor), data= calc_req, na.action=na.omit)
+
+summary(calc.fit7)
+
+plot_data7 <- ggpredict(calc.fit7, terms = c("gender", "instructor"), type = "re", show_ci=F)
+
+ggplot(plot_data7, aes(x = x, y = predicted, color = group)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = group), alpha = 0.7) +
+  labs(
+    title = "Predicted values of Cognitive Competence Change",
+    y = "Cognitive Competence Change",
+    x = "Gender",
+    color = "Instructor"
+  ) + 
+  theme_minimal()
+```
+
+# Looking at achieveable gain
+
+## Is cognitive competence more important for males and females in terms of acheivable gain?
+
+### Looking at some means
+```{r}
+calc_req|>
+  group_by(gender)|>
+  summarize(mean_cc_pre = mean(cognitive.competence.pre),
+            mean_cc_post = mean(cognitive.competence.post),
+            mean_cc_change = mean(cognitive.competence.change),
+            mean_ach_gain = mean(ach.gain.24),
+            mean_pre_score = mean(pre.perc.24),
+            mean_post_score = mean(post.perc.24))
+
+allYrsFinal|>
+  group_by(gender)|>
+  summarize(mean_cc_pre = mean(cognitive.competence.pre),
+            mean_cc_post = mean(cognitive.competence.post),
+            mean_cc_change = mean(cognitive.competence.change),
+            mean_ach_gain = mean(ach.gain.24),
+            mean_pre_score = mean(pre.perc.24),
+            mean_post_score = mean(post.perc.24))
+```
+
+
+### Comparing model fit with pre cognitive competence for females and males 
+```{r}
+fem_calc <- calc_req|>
+  filter(gender == "Female")
+
+pre_female.fit <- lm(ach.gain.24 ~ cognitive.competence.pre + textbook.classification + instructor.section, data=fem_calc)
+
+summary(pre_female.fit)
+```
+
+```{r}
+male_calc <- calc_req|>
+  filter(gender == "Male")
+
+pre_male.fit <- lm(ach.gain.24 ~ cognitive.competence.pre + textbook.classification + instructor.section, data=male_calc)
+
+summary(pre_male.fit)
+```
+
+### Comparing model fit with cognitive competence change for females and males 
+```{r}
+change_female.fit <- lm(ach.gain.24 ~ cognitive.competence.change + textbook.classification + instructor.section, data=fem_calc)
+
+summary(change_female.fit)
+```
+```{r}
+change_male.fit <- lm(ach.gain.24 ~ cognitive.competence.change + textbook.classification + instructor.section, data=male_calc)
+
+summary(change_female.fit)
+```
+
+### Comparing model fit with post cognitive competence for females and males 
+```{r}
+post_female.fit <- lm(ach.gain.24 ~ cognitive.competence.post + textbook.classification + instructor.section, data=fem_calc)
+
+summary(post_female.fit)
+```
+
+```{r}
+post_male.fit <- lm(ach.gain.24 ~ cognitive.competence.post + textbook.classification + instructor.section, data=male_calc)
+
+summary(post_male.fit)
+```
+
+## Model predicting achieveable gain from gender, cognitive competence, textbook classification and instructor section
+
+### Pre
+```{r}
+pre_ach_gain.fit <- lm(ach.gain.24 ~ gender * cognitive.competence.pre + textbook.classification + instructor.section, data = calc_req)
+
+summary(pre_ach_gain.fit)
+
+```
+
+### Change
+```{r}
+change_ach_gain.fit <- lm(ach.gain.24 ~ gender * cognitive.competence.change + textbook.classification + instructor.section, data = calc_req)
+
+summary(change_ach_gain.fit)
+```
+
+### Post
+```{r}
+post_ach_gain.fit <- lm(ach.gain.24 ~ gender * cognitive.competence.post+ textbook.classification + instructor.section, data = calc_req)
+
+summary(post_ach_gain.fit)
+```
+
+# Expected Grade
+
+## Proportion tables of gender and pre/post grade expectations
+```{r}
+grade_order <- c("A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "F")
+
+pre_prop_table <- prop.table(table(calc_req$grade.expectation.pre, calc_req$gender))
+pre_prop_table <- pre_prop_table[match(grade_order, rownames(pre_prop_table), nomatch = 0), ]
+
+post_prop_table <- prop.table(table(calc_req$grade.expectation.post, calc_req$gender))
+post_prop_table <- post_prop_table[match(grade_order, rownames(post_prop_table), nomatch = 0), ]
+
+pre_prop_table
+post_prop_table
+```
+
+```{r}
+pre_grade_prop <- data.frame(pre_prop_table)
+
+pre_grade_prop <- pre_grade_prop|>
+  rename(Grade = Var1,
+         Gender = Var2,
+         Proportion = Freq)
+
+
+
+pre_grade_prop |>
+  ggplot(aes(fill=Grade, y=Proportion, x = Gender )) +
+  geom_bar(position="fill", stat="identity") +
+  theme_minimal()
+  
+```
+```{r}
+post_grade_prop <- data.frame(post_prop_table)
+
+post_grade_prop <- post_grade_prop|>
+  rename(Grade = Var1,
+         Gender = Var2,
+         Proportion = Freq)
+
+
+
+post_grade_prop |>
+  ggplot(aes(fill=Grade, y=Proportion, x = Gender )) +
+  geom_bar(position="fill", stat="identity") +
+  theme_minimal()
+  
+```
+
+
+## Grade expectation pre
+```{r}
+exp_grade_ccc.fit <- lm(cognitive.competence.change ~ textbook.classification + grade.expectation.pre * gender + instructor.section, data = calc_req)
+
+summary(exp_grade_ccc.fit)
+anova(exp_grade_ccc.fit)
+
+```
+
+```{r}
+exp_grade_ach.fit <- lm(ach.gain.24 ~ textbook.classification + grade.expectation.pre * gender + instructor.section, data = calc_req)
+
+summary(exp_grade_ach.fit)
+anova(exp_grade_ach.fit)
+
+```
+
+# Look year by year
+
+### Filtering by year
+```{r}
+unique(calc_req$year)
+
+calc_14_15 <- calc_req|>
+  filter(year == "14-15")
+
+calc_15_16 <- calc_req|>
+  filter(year == "15-16")
+
+calc_16_17 <- calc_req |>
+  filter(year == "16-17")
+```
+
+```{r}
+calc_14_15 |>
+  select(gender, textbook.classification, instructor.section, instructor, years.teaching.intro.stats.binned)|>
+  distinct()
+# only ISI was used in 14-15
+# instructors were 204, 95, 234
+
+calc_15_16 |>
+  select(gender, textbook.classification, instructor.section, instructor, years.teaching.intro.stats.binned)|>
+  distinct()
+# OtherSBI, ISI, Other were used
+# instructors were 95, 177, 182
+
+calc_16_17 |>
+  select(gender, textbook.classification, instructor.section, instructor, years.teaching.intro.stats.binned)|>
+  distinct()
+# NotSBI2, OtherSBI, and NotSBI were used
+# instructors were 40, 73, 95, 99
+
+# only instructor 95 was appeared in all 3 years
+
+```
+## Looking at Instructor 95 because he was the only instructor that appeared in all 3 years
+```{r}
+calc_req |>
+  filter(instructor == "Instructor95")|>
+  select(textbook.used, textbook.classification, instructor.section, lecture.type)|>
+  distinct()
+```
+
+
+
+```{r}
+calc_req |>
+  filter(instructor == "Instructor95")|>
+  ggplot(aes(x=year, y = cognitive.competence.change)) +
+  geom_boxplot() +
+  geom_violin(alpha = 0.5) +
+  facet_wrap(~gender)
+```
+
+```{r}
+calc_req |>
+  filter(instructor == "Instructor95")|>
+  ggplot(aes(x=year, y = ach.gain.24)) +
+  geom_boxplot() +
+  geom_violin(alpha = 0.5) +
+  facet_wrap(~gender)
+```
+
+# Table of instructor and textbook classification
+```{r}
+table(calc_req$instructor, calc_req$textbook.classification)
+```
+
+# lm model with gender, math.perf.post, textbook classification, and instructor.section
+```{r}
+calc.fit8 <- lm(cognitive.competence.change ~ textbook.classification + instructor.section + gender * math.perf.pre, data = calc_req)
+
+summary(calc.fit8)
+anova(calc.fit8)
+```
+
+# lmer model with gender, math.perf.post, and instructor.section
+```{r}
+calc.fit9 <- lmer(cognitive.competence.change ~ gender + math.perf.pre + (1+gender|instructor), data = calc_req, na.action = na.omit)
+
+
+summary(calc.fit9)
+
+plot_data9 <- ggpredict(calc.fit9, terms = c("gender", "instructor"), type = "re", show_ci=F)
+
+ggplot(plot_data9, aes(x = x, y = predicted, color = group)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = group), alpha = 0.7) +
+  labs(
+    title = "Predicted values of cognitive competence change",
+    y = "cognitive competence change",
+    x = "gender",
+    color = "instructor"
+  ) +
+  theme_minimal()
+
+```
+
+
+# Looking how cognitive competence, grade expectation,math perf, math comp, and mastering confidence are related
+
+## Pre (per gender)
+```{r}
+pre_vars <- c("cognitive.competence.pre", "math.comp.pre", "math.perf.pre", "mastering.confidence.pre")
+
+pre_vars_F <- calc_req|>
+  filter(gender == "Female")|>
+  select(all_of(pre_vars))|>
+  drop_na()
+
+cor(pre_vars_F)
+corrplot(cor(pre_vars_F))
+
+pre_vars_M <- calc_req|>
+  filter(gender == "Male")|>
+  select(all_of(pre_vars))|>
+  drop_na()
+
+cor(pre_vars_M)
+corrplot(cor(pre_vars_M))
+
+```
+## Post (per gender)
+```{r}
+post_vars <- c("cognitive.competence.post", "math.comp.post", "math.perf.post", "mastering.confidence.post")
+
+post_vars_F <- calc_req|>
+  filter(gender == "Female")|>
+  select(all_of(post_vars))|>
+  drop_na()
+
+cor(post_vars_F)
+corrplot(cor(post_vars_F))
+
+post_vars_M <- calc_req|>
+  filter(gender == "Male")|>
+  select(all_of(post_vars))|>
+  drop_na()
+
+cor(post_vars_M)
+corrplot(cor(post_vars_M))
+
+```
+
+## Change (per gender)
+```{r}
+calc_req <- calc_req|>
+  mutate(math.comp.change = math.comp.post - math.comp.pre,
+         math.perf.change = math.perf.post - math.comp.pre)
+
+
+change_vars <- c("cognitive.competence.change", "math.comp.change", "math.perf.change", "mastering.confidence.change")
+
+change_vars_F <- calc_req|>
+  filter(gender == "Female")|>
+  select(all_of(change_vars))|>
+  drop_na()
+
+cor(change_vars_F)
+corrplot(cor(change_vars_F))
+
+change_vars_M <- calc_req|>
+  filter(gender == "Male")|>
+  select(all_of(change_vars))|>
+  drop_na()
+
+cor(change_vars_M)
+corrplot(cor(change_vars_M))
+
+```
+
+# Whether instructor gender matters
+Model with instructor gender: gender slope variance = 0.03733
+```{r}
+calc.fit10 <- lmer(cognitive.competence.change ~ gender+ instructor.gender + 
+                (1+gender|instructor), data= calc_req)
+summary(calc.fit10)
+```
+
+Model without instructor gender: gender slope variance = 0.03537
+```{r}
+calc.fit11 <- lmer(cognitive.competence.change ~ gender + 
+                (1+gender|instructor), data= calc_req)
+summary(calc.fit11)
+```
+

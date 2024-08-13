@@ -1,0 +1,62 @@
+---
+title: "CourseEvals"
+format: html
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+summarise <- dplyr::summarise
+
+stat217 <- read_csv("STAT 217 Summer Course Evaluation - Extra Credit.csv")
+stat218 <- read_csv("STAT 218 Summer Course Evaluation - Extra Credit.csv")
+```
+
+```{r}
+stat217 <- clean_names(stat217)
+stat218 <- clean_names(stat218)
+```
+
+```{r}
+# 26 responses (class size of 31)
+stat217 |>
+  group_by(how_do_you_identify_yourself) |>
+  summarise(count = n())
+```
+
+```{r}
+# 29 responses (class size of 33)
+stat218 |>
+  group_by(how_do_you_identify_yourself) |>
+  summarise(count = n())
+```
+
+```{r}
+both <- rbind(stat217, stat218)
+
+both |>
+  group_by(how_do_you_identify_yourself) |>
+  summarise(count = n())
+```
+
+```{r}
+both |>
+  group_by(did_your_confidence_in_statistics_go_up_or_down_after_taking_this_course) |>
+  summarise(count = n()) |>
+  ggplot(aes(x = did_your_confidence_in_statistics_go_up_or_down_after_taking_this_course, y = count)) +
+  geom_bar(stat = "identity")
+
+both |>
+  group_by(how_do_you_identify_yourself, did_your_confidence_in_statistics_go_up_or_down_after_taking_this_course) |>
+  summarise(count = n(), .groups = "drop") |>
+  ggplot(aes(x = did_your_confidence_in_statistics_go_up_or_down_after_taking_this_course, y = count, fill = how_do_you_identify_yourself)) +
+  geom_bar(stat = "identity")
+```
+
+```{r}
+# Next steps:
+  # Flip responses
+  # Look at question responses across genders (not enough men in dataset? - ask)
+  # Compare similar questions to allYrsFinal responses
+```
+

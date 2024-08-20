@@ -91,35 +91,128 @@ window.Quarto = {
 </header>
 
 
-<ul>
-<li>section.num.responded</li>
-<li>section.pre.responded: sum of answered.pre</li>
-<li>section.post.responded: sum of answered.post</li>
-<li>section.both.responded: sum of answered.both</li>
-<li>section.c.rr: <span class="math inline">\(\frac{section.both.responded}{class.size.start}\)</span></li>
-<li>section.ach.gain.24: mean of ach.gain.24</li>
-<li>section.pre.perc.24: mean of pre.perc.24</li>
-<li>section.post.perc.24: mean of post.perc.24</li>
-<li>section.gpa: mean of gpa</li>
-<li>section.satact.zscore: mean of satact.zscore</li>
-<li>section.affect.pre: mean of affect.pre</li>
-<li>section.affect.post: mean of affect.post</li>
-<li>section.cognitive.competence.pre: mean of cognitive.competence.pre</li>
-<li>section.cognitive.competence.post: mean of cognitive.competence.post</li>
-<li>section.difficulty.pre: mean of difficulty.pre</li>
-<li>section.difficulty.post: mean of difficulty.post</li>
-<li>section.effort.pre: mean of effort.pre</li>
-<li>section.effort.post: mean of effort.post</li>
-<li>section.interest.pre: mean of interest.pre</li>
-<li>section.interest.post: mean of interest.post</li>
-<li>section.value.pre: mean of value.pre</li>
-<li>section.value.post: mean of value.post</li>
-<li>section.overall.attitude.pre: mean of overall.attitude.pre</li>
-<li>section.overall.attitude.post: mean of overall.attitude.post</li>
-<li>var.pre: variance of pre.perc.24</li>
-<li>var.post: variance of post.perc.24</li>
-<li>d: <span class="math inline">\(\frac{\text{section.post.perc.24} - \text{section.pre.perc.24}}{\sqrt{\frac{\text{var.pre}+\text{var.post}}{2}}}\)</span></li>
-</ul>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Description (per section)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>section.num.responded</td>
+<td>number of student responses</td>
+</tr>
+<tr class="even">
+<td>section.pre.responded</td>
+<td>sum of answered.pre</td>
+</tr>
+<tr class="odd">
+<td>section.post.responded</td>
+<td>sum of answered.post</td>
+</tr>
+<tr class="even">
+<td>section.both.responded</td>
+<td>sum of answered.both</td>
+</tr>
+<tr class="odd">
+<td>section.c.rr</td>
+<td><span class="math inline">\(\frac{section.both.responded}{class.size.start}\)</span></td>
+</tr>
+<tr class="even">
+<td>section.ach.gain.24</td>
+<td>mean of ach.gain.24</td>
+</tr>
+<tr class="odd">
+<td>section.pre.perc.24</td>
+<td>mean of pre.perc.24</td>
+</tr>
+<tr class="even">
+<td>section.post.perc.24</td>
+<td>mean of post.perc.24</td>
+</tr>
+<tr class="odd">
+<td>section.gpa</td>
+<td>mean of gpa</td>
+</tr>
+<tr class="even">
+<td>section.satact.zscore</td>
+<td>mean of satact.zscore</td>
+</tr>
+<tr class="odd">
+<td>section.affect.pre</td>
+<td>mean of affect.pre</td>
+</tr>
+<tr class="even">
+<td>section.affect.post</td>
+<td>mean of affect.post</td>
+</tr>
+<tr class="odd">
+<td>section.cognitive.competence.pre</td>
+<td>mean of cognitive.competence.pre</td>
+</tr>
+<tr class="even">
+<td>section.cognitive.competence.post</td>
+<td>mean of cognitive.competence.post</td>
+</tr>
+<tr class="odd">
+<td>section.difficulty.pre</td>
+<td>mean of difficulty.pre</td>
+</tr>
+<tr class="even">
+<td>section.difficulty.post</td>
+<td>mean of difficulty.post</td>
+</tr>
+<tr class="odd">
+<td>section.effort.pre</td>
+<td>mean of effort.pre</td>
+</tr>
+<tr class="even">
+<td>section.effort.post</td>
+<td>mean of effort.post</td>
+</tr>
+<tr class="odd">
+<td>section.interest.pre</td>
+<td>mean of interest.pre</td>
+</tr>
+<tr class="even">
+<td>section.interest.post</td>
+<td>mean of interest.post</td>
+</tr>
+<tr class="odd">
+<td>section.value.pre</td>
+<td>mean of value.pre</td>
+</tr>
+<tr class="even">
+<td>section.value.post</td>
+<td>mean of value.post</td>
+</tr>
+<tr class="odd">
+<td>section.overall.attitude.pre</td>
+<td>mean of overall.attitude.pre</td>
+</tr>
+<tr class="even">
+<td>section.overall.attitude.post</td>
+<td>mean of overall.attitude.post</td>
+</tr>
+<tr class="odd">
+<td>var.pre</td>
+<td>variance of pre.perc.24</td>
+</tr>
+<tr class="even">
+<td>var.post</td>
+<td>variance of post.perc.24</td>
+</tr>
+<tr class="odd">
+<td>d (Cohen’s d)</td>
+<td><span class="math inline">\(\frac{\text{section.post.perc.24} - \text{section.pre.perc.24}}{\sqrt{\frac{\text{var.pre}+\text{var.post}}{2}}}\)</span></td>
+</tr>
+</tbody>
+</table>
 
 </main>
 <!-- /main column -->

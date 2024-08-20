@@ -3,30 +3,32 @@ title: "Section-Level Variables"
 format: html
 ---
 
--   section.num.responded
--   section.pre.responded: sum of answered.pre
--   section.post.responded: sum of answered.post
--   section.both.responded: sum of answered.both
--   section.c.rr: $\frac{section.both.responded}{class.size.start}$
--   section.ach.gain.24: mean of ach.gain.24
--   section.pre.perc.24: mean of pre.perc.24
--   section.post.perc.24: mean of post.perc.24
--   section.gpa: mean of gpa
--   section.satact.zscore: mean of satact.zscore
--   section.affect.pre: mean of affect.pre
--   section.affect.post: mean of affect.post
--   section.cognitive.competence.pre: mean of cognitive.competence.pre
--   section.cognitive.competence.post: mean of cognitive.competence.post
--   section.difficulty.pre: mean of difficulty.pre
--   section.difficulty.post: mean of difficulty.post
--   section.effort.pre: mean of effort.pre
--   section.effort.post: mean of effort.post
--   section.interest.pre: mean of interest.pre
--   section.interest.post: mean of interest.post
--   section.value.pre: mean of value.pre
--   section.value.post: mean of value.post
--   section.overall.attitude.pre: mean of overall.attitude.pre
--   section.overall.attitude.post: mean of overall.attitude.post
--   var.pre: variance of pre.perc.24
--   var.post: variance of post.perc.24
--   d: $\frac{\text{section.post.perc.24} - \text{section.pre.perc.24}}{\sqrt{\frac{\text{var.pre}+\text{var.post}}{2}}}$
+Variable|Description (per section)
+-----|-----
+section.num.responded|number of student responses
+section.pre.responded|sum of answered.pre
+section.post.responded|sum of answered.post
+section.both.responded|sum of answered.both
+section.c.rr|$\frac{section.both.responded}{class.size.start}$
+section.ach.gain.24|mean of ach.gain.24
+section.pre.perc.24|mean of pre.perc.24
+section.post.perc.24|mean of post.perc.24
+section.gpa|mean of gpa
+section.satact.zscore|mean of satact.zscore
+section.affect.pre|mean of affect.pre
+section.affect.post|mean of affect.post
+section.cognitive.competence.pre|mean of cognitive.competence.pre
+section.cognitive.competence.post|mean of cognitive.competence.post
+section.difficulty.pre|mean of difficulty.pre
+section.difficulty.post|mean of difficulty.post
+section.effort.pre|mean of effort.pre
+section.effort.post|mean of effort.post
+section.interest.pre|mean of interest.pre
+section.interest.post|mean of interest.post
+section.value.pre|mean of value.pre
+section.value.post|mean of value.post
+section.overall.attitude.pre|mean of overall.attitude.pre
+section.overall.attitude.post|mean of overall.attitude.post
+var.pre|variance of pre.perc.24
+var.post|variance of post.perc.24
+d (Cohen's d)|$\frac{\text{section.post.perc.24} - \text{section.pre.perc.24}}{\sqrt{\frac{\text{var.pre}+\text{var.post}}{2}}}$

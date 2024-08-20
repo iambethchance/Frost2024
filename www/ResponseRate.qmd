@@ -3,4 +3,4 @@ title: "Response Rate"
 format: html
 ---
 
-The response rate on the pre- and post-tests to concept questions 
+The proportion of concept questions answered by the student on the pre-test, post-test, or both (based on previous question).

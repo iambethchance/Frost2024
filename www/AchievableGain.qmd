@@ -3,6 +3,8 @@ title: "Achievable Gain"
 format: html
 ---
 
+Empirically, we found having an achievable gain of -1.1 or below to be quite unusual and would recommend filtering out such observations
+
 #### How achievable gain was calculated:
 
 $$

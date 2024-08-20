@@ -1,0 +1,12 @@
+name: IntroStatsData
+title: IntroStatsData
+username: librill
+account: librill
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 12461853
+bundleId: 9002758
+url: https://librill.shinyapps.io/IntroStatsData/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

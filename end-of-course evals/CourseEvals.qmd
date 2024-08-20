@@ -8,6 +8,8 @@ library(tidyverse)
 library(janitor)
 summarise <- dplyr::summarise
 
+load(url("http://www.rossmanchance.com/iscam3/ISCAM.RData"))
+
 stat217 <- read_csv("STAT 217 Summer Course Evaluation - Extra Credit.csv")
 stat218 <- read_csv("STAT 218 Summer Course Evaluation - Extra Credit.csv")
 ```
@@ -32,6 +34,8 @@ stat218 |>
 ```
 
 ```{r}
+# 55 total responses
+
 both <- rbind(stat217, stat218)
 
 both |>
@@ -52,6 +56,41 @@ both |>
   ggplot(aes(x = did_your_confidence_in_statistics_go_up_or_down_after_taking_this_course, y = count, fill = how_do_you_identify_yourself)) +
   geom_bar(stat = "identity")
 ```
+
+```{r}
+both |>
+  mutate(how_do_you_identify_yourself = if_else(how_do_you_identify_yourself %in% c("Woman", "Man"), how_do_you_identify_yourself, "Other")) |>
+  group_by(how_do_you_identify_yourself, did_your_confidence_in_statistics_go_up_or_down_after_taking_this_course) |>
+  summarise(count = n(), .groups = "drop") |>
+  group_by(how_do_you_identify_yourself) |>
+  mutate(proportion = count / sum(count)) |>
+  ggplot(aes(x = how_do_you_identify_yourself, y = proportion, fill = did_your_confidence_in_statistics_go_up_or_down_after_taking_this_course)) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(fill = "Confidence level change:")
+```
+
+```{r}
+means_both <- both |>
+  mutate(how_do_you_identify_yourself = if_else(how_do_you_identify_yourself %in% c("Woman", "Man"), how_do_you_identify_yourself, "Other")) |>
+  mutate(how_do_you_identify_yourself = factor(how_do_you_identify_yourself, levels = c("Man", "Woman", "Other"))) |>
+  select(how_do_you_identify_yourself, i_find_statistics_interesting:i_often_felt_dumb_during_this_class) |>
+  group_by(how_do_you_identify_yourself) |>
+  summarise(across(i_find_statistics_interesting:i_often_felt_dumb_during_this_class, ~ mean(.x))) |>
+  arrange(how_do_you_identify_yourself)
+
+means_both
+```
+
+```{r}
+means_both |>
+  select(i_had_trouble_understanding_statistics_because_of_how_i_think) |>
+  pivot_longer(cols = i_find_statistics_interesting:i_often_felt_dumb_during_this_class, names_to = "question", values_to = "response_mean") |>
+  ggplot(aes(x = question, y = response_mean, color = how_do_you_identify_yourself, group = how_do_you_identify_yourself)) +
+  geom_point()
+```
+
+
 
 ```{r}
 # Next steps:

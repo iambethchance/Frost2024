@@ -1,16 +1,16 @@
 # loading in data sets for comparison
-SERJData <- read.csv("../../SERJData.csv", stringsAsFactors = TRUE)
-appData <- read.csv("../../AllYearsFinalSubset.csv", stringsAsFactors = TRUE)
-startData <- read.csv("../../All Years Final Public - with Vars.csv", stringsAsFactors = TRUE)
-newSERJ <- read.csv("SERJData.csv", stringsAsFactors = TRUE)
+SERJData <- read.csv("FinalData/paper_SERJData.csv", stringsAsFactors = TRUE)
+appData <- read.csv("FinalData/AllYearsFinalSubset.csv", stringsAsFactors = TRUE)
+startData <- read.csv("FinalData/All Years Final Public - with Vars.csv", stringsAsFactors = TRUE)
+# newSERJ <- read.csv("SERJData.csv", stringsAsFactors = TRUE)
 
 count(allYrs$textbook.classification.old)
 count(allYrs$textbook.classification)
 
 table(allYrs$textbook.classification, allYrs$math.prereq)
 
-year3 <- read.csv("../../3 Years final Public.csv", stringsAsFactors = TRUE)
-allYrs <- read.csv("../../All Years Final Public - with Vars.csv", stringsAsFactors = TRUE)
+year3 <- read.csv("FinalData/3 Years Final Public.csv", stringsAsFactors = TRUE)
+allYrs <- read.csv("FinalData/All Years Final Public - with Vars.csv", stringsAsFactors = TRUE)
 
 dim(year3)
 dim(allYrs)
@@ -19,8 +19,20 @@ allYrs <- allYrs |>
 
 table(allYrs$textbook.classification, allYrs$textbook.classification.old)
 
+allYrs <- allYrs |>
+  select(-c(textbook.used.old, textbook.classification.old)) |>
+  rename(textbook.used = textbook.used.old,
+         textbook.classification = textbook.classification.old)
+
+# the textbook.used and textbook.classification columns in year3 match the columns in allYrs (not old)
+
 setdiff(names(year3), names(allYrs))
 setdiff(names(allYrs), names(year3))
+
+diff1 <- setdiff(year3, allYrs)
+diff2 <- setdiff(allYrs, year3)
+nrow(diff1)
+nrow(diff2)
 
 # Settings for appData:
   # all years
